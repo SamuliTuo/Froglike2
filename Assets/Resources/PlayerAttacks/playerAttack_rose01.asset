@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3616dc95a153b6141bf75eb6af689121, type: 3}
+  m_Name: playerAttack_rose01
+  m_EditorClassIdentifier: 
+  animatorStateName: attack_rose01
+  attackDuration: 0
+  animationSpeed: 1
+  animationStartPerc: 0
+  nextAttack: {fileID: 11400000, guid: c7a0c1a8ea5bc7f4ab934636a74e88b8, type: 2}
+  nextAttackInitPerc: 0.503
+  stepForce: 15
+  stepDuration: 0.35
+  attackHomingEndPerc: 0.1
+  moveReturnPerc: 0.614
+  moveReturnDuration: 0.3
+  rotReturnPerc: 0.797
+  rotReturnDuration: 0.2
+  weaponColActivatePerc: 0
+  weaponColDeactivatePerc: 0.2
