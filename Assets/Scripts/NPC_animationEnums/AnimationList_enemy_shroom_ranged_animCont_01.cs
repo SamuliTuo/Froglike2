@@ -13,5 +13,6 @@ public enum AnimationList_enemy_shroom_ranged_animCont_01
 	recoil,
 	T_pose,
 	THRAAAASH,
-	Walk
+	Walk,
+	aggro
 };
