@@ -52,4 +52,14 @@ public class PlayerAttackScriptable : ScriptableObject {
 
     [Tooltip("At what point of attack will the sword-hitboxes de-activate"), Range(0.0f, 1.0f)]
     public float weaponColDeactivatePerc = 0.75f;
+
+    [Header("Swing effect orientation")]
+    public float width = 1;
+    public float length = 1;
+    public float growSpeed = 1;
+    public float flySpeed = 1;
+    public float lifeTime = 0.1f;
+    public float spawnDelay = 0.1f;
+    public Vector3 spawnOffset;
+    public Vector3 rotation;
 }

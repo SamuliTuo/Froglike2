@@ -130,10 +130,8 @@ public class PlayerRolling : MonoBehaviour {
             }
 
             if (continuousRoll) {
-                animate.FadeToAnimation("roll_continuous", 0.3f, 0);
+                animate.FadeToAnimation("roll_continuous", 0.15f, 0);
                 rollingSpeed = cRollMoveSpeed;
-                //particles
-                //anim
             }
             else {
                 t += currentLerpSpeed * Time.deltaTime * 2;

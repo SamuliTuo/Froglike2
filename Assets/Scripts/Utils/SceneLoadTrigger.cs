@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class SceneLoadTrigger : MonoBehaviour {
 
-    [SerializeField] private string sceneToLoad = null;
+    public string sceneToLoad = null;
 
     void OnTriggerEnter(Collider other) {
         if (other.CompareTag("Player") && !other.isTrigger) {

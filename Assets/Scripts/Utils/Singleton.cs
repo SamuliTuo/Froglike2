@@ -10,6 +10,7 @@ public class Singleton : MonoBehaviour {
     public DamageInstanceSpawner DamageInstanceSpawner { get; private set; }
     public EnemyHPBars EnemyHPBars { get; private set; }
     public PlayerInventory PlayerInventory { get; private set; }
+    public PlayerAttackSpawner PlayerAttackSpawner { get; private set; }
     public GameEvents GameEvents { get; private set; }
     public CameraChanger CameraChanger { get; private set; }
     public VFXManager VFXManager { get; private set; }
@@ -30,6 +31,7 @@ public class Singleton : MonoBehaviour {
         DamageInstanceSpawner = GetComponentInChildren<DamageInstanceSpawner>();
         EnemyHPBars = GetComponentInChildren<EnemyHPBars>();
         PlayerInventory = GetComponentInChildren<PlayerInventory>();
+        PlayerAttackSpawner = GetComponentInChildren<PlayerAttackSpawner>();
         GameEvents = GetComponentInChildren<GameEvents>();
         CameraChanger = GetComponent<CameraChanger>();
         VFXManager = GetComponentInChildren<VFXManager>();
@@ -40,5 +42,13 @@ public class Singleton : MonoBehaviour {
         Player = GameObject.Find("Player").transform;
         PlayerHurt = Player.GetComponent<PlayerHurt>();
         PlayerUpgradeHolder = Player.GetComponentInChildren<PlayerAbilityUpgrader>();
+    }
+
+    public void ClearPools()
+    {
+        DamageInstanceSpawner.ResetPools();
+        EnemyHPBars.ResetPools();
+        LootSpawner.ResetPools();
+        PlayerAttackSpawner.ResetPool();
     }
 }

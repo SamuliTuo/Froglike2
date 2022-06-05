@@ -76,10 +76,18 @@ public class PlayerAbilityUpgrader : MonoBehaviour {
     [SerializeField] private PlayerAbilityUpgradeHolder slot_shout = null;
     [SerializeField] private PlayerAbilityUpgradeHolder slot_throw = null;
 
+    private HideCursor cursor;
     private PlayerStates lastState;
     private int uses = 0;
 
+    private void Awake()
+    {
+        print(Helpers.Cam);
+        cursor = Helpers.Cam.GetComponentInParent<HideCursor>();
+    }
+
     public void OpenAbilityUpgradeUI(UpgradeType type, int uses) {
+        cursor.ToggleCursor(true);
         this.uses = uses;
         Time.timeScale = 0;
         lastState = Singleton.instance.Player.GetComponent<PlayerController>().state;
@@ -88,6 +96,7 @@ public class PlayerAbilityUpgrader : MonoBehaviour {
         UIholder.GetComponent<AbilityUpgradeUI>().SetCurrentUpgradeType(type);
     }
     public void CloseAbilityUpgradeUI() {
+        cursor.ToggleCursor(false);
         UIholder.gameObject.SetActive(false);
         Time.timeScale = 1;
         Singleton.instance.Player.GetComponent<PlayerController>().state = lastState;
