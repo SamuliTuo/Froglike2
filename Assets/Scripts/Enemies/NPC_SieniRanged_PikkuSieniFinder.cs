@@ -44,7 +44,7 @@ public class NPC_SieniRanged_PikkuSieniFinder : MonoBehaviour {
             if (hitColliders[i].transform.root == this.transform.root) {
                 continue;
             }
-            if(hitColliders[i].transform.root.gameObject.name.Contains("Enemy_shroom")) {
+            if(hitColliders[i].transform.root.gameObject.name.Contains("Enemy_shroom") && hitColliders[i].isTrigger == false) {
                 if(!effectShrooms.Contains(hitColliders[i].transform.root.gameObject)) {
                     effectShrooms.Add(hitColliders[i].transform.root.gameObject);
                 }

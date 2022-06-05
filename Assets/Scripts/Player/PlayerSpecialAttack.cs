@@ -34,6 +34,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
     private SwordTrigger swordCol;
     private PlayerRolling roll;
     private PlayerRotate rotate;
+    private AttackInstance currentAttackInstance;
     private Animator anim;
     private Rigidbody rb;
     private Transform model;
@@ -67,12 +68,14 @@ public class PlayerSpecialAttack : MonoBehaviour {
         if (!buttonHeld)
             return;
 
-        if (control.state == PlayerStates.GROUND_POUND || 
-            control.state == PlayerStates.ROLL_SLASH || 
-            control.state == PlayerStates.BASEBALL_SAMURAI)
+        if (control.state == PlayerStates.GROUND_POUND) 
         {
             specialQueued = true;
             attackQueued = rollQueued = jumpQueued = false;
+            return;
+        }
+        else if (control.state == PlayerStates.ROLL_SLASH || control.state == PlayerStates.BASEBALL_SAMURAI)
+        {
             return;
         }
 
@@ -116,8 +119,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
         {
             StartBaseballSamurai();
         }
-        else if (canSlash && (control.state == PlayerStates.ROLL ||
-            (control.state == PlayerStates.NORMAL && control.stepsSinceLastGrounded >= 3)))
+        else if (canSlash && (control.state == PlayerStates.ROLL || (control.state == PlayerStates.NORMAL && control.stepsSinceLastGrounded >= 3)))
         {
             StartRollSlash();
         }
@@ -164,6 +166,10 @@ public class PlayerSpecialAttack : MonoBehaviour {
             hijackControls = true;
         }
         rotate.SetRotateSpdMod(0f);
+        currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(
+            new Vector3(0, 1.1f, 1.2f),
+            Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(new Vector3(0, 0, 100)),
+            1.1f, 1.1f, 6, 5, 0.2f, 0.15f, 1);
         StartCoroutine(BaseballSamurai());
         if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
         {
@@ -185,6 +191,10 @@ public class PlayerSpecialAttack : MonoBehaviour {
             if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
             {
                 model.rotation = Quaternion.LookRotation(control.GetInput());
+            }
+            if (rb.velocity.y < 0)
+            {
+                rb.AddForce(Vector3.up * -rb.velocity.y * rb.mass, ForceMode.Impulse);
             }
             rb.AddForce(control.GetInput().normalized * secondStepMoveForce * buttonHeldTime, ForceMode.Impulse);
             takeSecondStep = false;
@@ -252,7 +262,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
         takeFirstStep = true;
     }
 
-    // testing:
+    // TESTS FOR TWEEKING AIMER SIZE:
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.green;
@@ -279,9 +289,9 @@ public class PlayerSpecialAttack : MonoBehaviour {
         {
             buttonHeldTime += Time.deltaTime;
 
-            // testing:
-            aimerRadiousss = 2.7f + Mathf.Clamp(buttonHeldTime * 1.8f, 1, baseballSamuraiChargeDuration * 1.3f);
-            aimerDisttt = 2.3f + Mathf.Clamp(buttonHeldTime * 1.8f, 1, baseballSamuraiChargeDuration * 1.3f);
+            // AIMER SIZE TEST:
+            aimerRadiousss = 2.7f + Mathf.Clamp(buttonHeldTime * 1.8f, 1, baseballSamuraiChargeDuration);
+            aimerDisttt = 2.3f + Mathf.Clamp(buttonHeldTime * 1.8f, 1, baseballSamuraiChargeDuration);
             // testing
 
             yield return null;
@@ -294,17 +304,19 @@ public class PlayerSpecialAttack : MonoBehaviour {
             if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
             {
                 model.rotation = Quaternion.LookRotation(attack.AimAndChooseTarget(
-                    2.7f + Mathf.Clamp(buttonHeldTime * 1.8f, 1, baseballSamuraiChargeDuration * 1.3f),
-                    2.3f + Mathf.Clamp(buttonHeldTime * 1.8f, 1, baseballSamuraiChargeDuration * 1.3f)));
+                    2.1f + Mathf.Clamp(buttonHeldTime * 1.8f, 1, baseballSamuraiChargeDuration),
+                    1.7f + Mathf.Clamp(buttonHeldTime * 1.8f, 1, baseballSamuraiChargeDuration)));
             }
             if (attack.target != null)
             {
                 stepTwoStartTime = t;
                 hijackControls = true;
+                SecondSlash();
             }
             else
             {
                 hijackControls = false;
+                SecondSlash();
             }
             takeSecondStep = true;
             yield return Helpers.GetWait(secondHitDuration);
@@ -319,17 +331,31 @@ public class PlayerSpecialAttack : MonoBehaviour {
             EndBaseballSamurai();
         }
     }
+    void SecondSlash()
+    {
+        float b = buttonHeldTime / 2.5f;
+        currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(
+            new Vector3(0, 0.75f, 1.2f),
+            Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(new Vector3(0, 0, 95)),
+            Mathf.Lerp(1.3f, 2, b),
+            Mathf.Lerp(1.3f, 2, b),
+            Mathf.Lerp(4.5f, 9, b),
+            Mathf.Lerp(4, 80, b),
+            Mathf.Lerp(0.1f, 0.3f, b),
+            0.15f,
+            buttonHeldTime);
+    }
     IEnumerator BaseballSamurai1stHitHitboxes()
     {
         yield return Helpers.GetWait(firstHitActivateTime);
         if (swordCol.triggerEnabled == false)
         {
-            swordCol.ToggleState(true);
+            swordCol.ColliderOn(currentAttackInstance);
         }
         yield return Helpers.GetWait(firstHitHitboxLifetime);
         if (swordCol.triggerEnabled == true)
         {
-            swordCol.ToggleState(false);
+            swordCol.ColliderOff();
         }
     }
     IEnumerator BaseballSamurai2ndHitHitboxes()
@@ -337,12 +363,12 @@ public class PlayerSpecialAttack : MonoBehaviour {
         yield return Helpers.GetWait(secondHitActivateTime);
         if (swordCol.triggerEnabled == false)
         {
-            swordCol.ToggleState(true);
+            swordCol.ColliderOn(currentAttackInstance);
         }
         yield return Helpers.GetWait(secondHitHitboxLifetime);
         if (swordCol.triggerEnabled == true)
         {
-            swordCol.ToggleState(false);
+            swordCol.ColliderOff();
         }
     }
     public void EndBaseballSamurai()
@@ -353,7 +379,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
         attack.target = null;
         if (swordCol.triggerEnabled == true)
         {
-            swordCol.ToggleState(false);
+            swordCol.ColliderOff();
         }
         EndAndCheckIfQueuedAction();
     }

@@ -8,11 +8,22 @@ public class PlayerAttackSpawner : MonoBehaviour
 
     private GameObject attackObject;
     private IObjectPool<GameObject> attackPool;
+    public void ResetPool() { attackPool.Clear(); }
 
     // Start is called before the first frame update
     void Awake()
     {
+        attackObject = Resources.Load("PlayerAttacks/AttackInstance") as GameObject;
         attackPool = new ObjectPool<GameObject>(CreateAttack, OnTakeAttackFromPool, OnReturnAttackToPool);
+    }
+
+    public AttackInstance SpawnAttack(Vector3 pos, Quaternion rot, float width, float length, float growSpeed, float flySpeed, float slashLifeTime, float spawnDelay, float damage)
+    {
+        var obj = attackPool.Get();
+        obj.transform.position = Singleton.instance.Player.position;
+        obj.GetComponent<AttackInstance>().Init(pos, rot, width, length, growSpeed, flySpeed, slashLifeTime, spawnDelay, damage);
+        obj.transform.position = pos;
+        return obj.GetComponent<AttackInstance>();
     }
 
     GameObject CreateAttack()

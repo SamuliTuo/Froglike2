@@ -14,7 +14,7 @@ public class PlayerHP : MonoBehaviour {
         hp = maxHP;
     }
 
-    public bool AddHPAndIsStillAlive(float amount) {
+    public bool AddHPAndCheckIfStillAlive(float amount) {
         hp += amount;
         if (hp > maxHP) {
             hp = maxHP;

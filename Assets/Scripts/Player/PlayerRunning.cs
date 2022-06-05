@@ -41,7 +41,7 @@ public class PlayerRunning : MonoBehaviour{
                     t = 0;
                 }
             }
-            else if (t < 1 && control.PlayerGrounded) {
+            else if (t < 1) {
                 t += Time.deltaTime * runSpeedAccelRate;
                 if (t >= 1) {
                     t = 1;

@@ -8,23 +8,30 @@ public class SwordTrigger : MonoBehaviour {
 
     private AttackHitEffects hitEffects;
     private CapsuleCollider col;
-    private List<GameObject> objectsHit = new List<GameObject>();
+    private AttackInstance currentAttack;
+    //private List<GameObject> objectsHit = new List<GameObject>();
 
     void Start() {
         hitEffects = GetComponentInParent<AttackHitEffects>();
         col = GetComponent<CapsuleCollider>();
     }
 
-    public void ToggleState(bool state) {
-        objectsHit.Clear();
-        triggerEnabled = state;
-        col.enabled = state;
+    public void ColliderOn(AttackInstance attackInstance) {
+        currentAttack = attackInstance;
+        triggerEnabled = true;
+        col.enabled = true;
+    }
+    public void ColliderOff() {
+        currentAttack = null;
+        triggerEnabled = false;
+        col.enabled = false;
     }
 
     void OnTriggerEnter(Collider other) {
-        if (other.CompareTag("Enemy") && !objectsHit.Contains(other.transform.root.gameObject)) {
-            objectsHit.Add(other.transform.root.gameObject);
-            hitEffects.EnemyHit(other);
+        if (other.CompareTag("Enemy") && currentAttack != null) {
+            if (currentAttack.ObjectHit(other.transform.root.gameObject)) {
+                hitEffects.EnemyHit(other);
+            }
         }
     }
 }

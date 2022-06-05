@@ -26,8 +26,7 @@ public class LevelManager : MonoBehaviour {
     }
 
     void ClearPools() {
-        Singleton.instance.DamageInstanceSpawner.ResetPools();
-        Singleton.instance.EnemyHPBars.ResetPools();
-        Singleton.instance.LootSpawner.ResetPools();
+        Singleton.instance.ClearPools();
+        
     }
 }

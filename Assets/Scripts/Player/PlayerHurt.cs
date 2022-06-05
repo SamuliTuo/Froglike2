@@ -42,7 +42,7 @@ public class PlayerHurt : MonoBehaviour {
             return;
         }
         control.ResetPlayer();
-        if (hp.AddHPAndIsStillAlive(-damage)) {
+        if (hp.AddHPAndCheckIfStillAlive(-damage)) {
             invulnerable = true;
             control.state = PlayerStates.NOT_IN_CONTROL;
             hurtDir = new Vector3(
@@ -57,7 +57,7 @@ public class PlayerHurt : MonoBehaviour {
         }
         else {
             //ded
-            SceneManager.LoadScene(0);
+            SceneManager.LoadScene(3);
         }
     }
 

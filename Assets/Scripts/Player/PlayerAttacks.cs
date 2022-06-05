@@ -22,6 +22,7 @@ public class PlayerAttacks : MonoBehaviour {
     private PlayerRotate rotate;
     private PlayerRolling roll;
     private PlayerColliderChanges colliders;
+    private AttackInstance currentAttackInstance;
     private PlayerAttackScriptable currentAttack = null;
     private PlayerAttackScriptable nextAttack = null;
     private SwordTrigger weaponTrigger;
@@ -137,6 +138,18 @@ public class PlayerAttacks : MonoBehaviour {
         }
         startedMoveReturn = false;
         anim.Play(attack.animatorStateName, 0, attack.animationStartPerc);
+
+        // Slash banana:
+        currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(
+            currentAttack.spawnOffset,
+            Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(currentAttack.rotation),
+            currentAttack.width,
+            currentAttack.length,
+            currentAttack.growSpeed,
+            currentAttack.flySpeed,
+            currentAttack.lifeTime, 
+            currentAttack.spawnDelay, 
+            1);
         StartCoroutine(UpdateAttack(attack));
     }
 
@@ -166,10 +179,10 @@ public class PlayerAttacks : MonoBehaviour {
     {
         float perc = 0;
         if (t < currentAttack.stepDuration * attSpdModifier) {
-            perc = 1 - t / currentAttack.stepDuration * attSpdModifier;
+            perc = 1 - t / (currentAttack.stepDuration * attSpdModifier);
         }
-        float desiredX = (model.forward * currentAttack.stepForce).x * perc * attSpdModifier;
-        float desiredZ = (model.forward * currentAttack.stepForce).z * perc * attSpdModifier;
+        float desiredX = (model.forward * currentAttack.stepForce).x * perc * (2 - attSpdModifier);
+        float desiredZ = (model.forward * currentAttack.stepForce).z * perc * (2 - attSpdModifier);
         Vector2 currentVelo = new Vector2(currX, currZ);
         Vector2 desiredVelo = new Vector2(desiredX, desiredZ);
         Vector2 newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, 100);
@@ -186,12 +199,12 @@ public class PlayerAttacks : MonoBehaviour {
                 t < attack.weaponColDeactivatePerc * attackDuration * attSpdModifier &&
                 weaponTrigger.triggerEnabled == false) 
             {
-                weaponTrigger.ToggleState(true);
+                weaponTrigger.ColliderOn(currentAttackInstance);
             }
             else if (t >= attack.weaponColDeactivatePerc * attackDuration * attSpdModifier &&
                 weaponTrigger.triggerEnabled == true) 
             {
-                weaponTrigger.ToggleState(false);
+                weaponTrigger.ColliderOff();
             }
 
             // Movement:
@@ -217,20 +230,20 @@ public class PlayerAttacks : MonoBehaviour {
                 if (attackQueued) {
                     if (nextAttack != null) {
                         anim.speed = 1;
-                        weaponTrigger.ToggleState(false);
+                        weaponTrigger.ColliderOff();
                         InitAttack(nextAttack);
                         yield break;
                     }
                 }
                 else if (specialQueued) {
                     anim.speed = 1;
-                    weaponTrigger.ToggleState(false);
+                    weaponTrigger.ColliderOff();
                     special.StartBaseballSamurai();
                     yield break;
                 }
                 else if (rollQueued) {
                     anim.speed = 1;
-                    weaponTrigger.ToggleState(false);
+                    weaponTrigger.ColliderOff();
                     hijackControls = false;
                     roll.InitRoll();
                     yield break;
@@ -238,7 +251,7 @@ public class PlayerAttacks : MonoBehaviour {
                 else if (jumpQueued)
                 {
                     anim.speed = 1;
-                    weaponTrigger.ToggleState(false);
+                    weaponTrigger.ColliderOff();
                     hijackControls = false;
                     control.state = PlayerStates.NORMAL;
                     control.InitAccelerationModReturn(0.3f, false);
@@ -257,7 +270,7 @@ public class PlayerAttacks : MonoBehaviour {
     public void StopAttacks() {
         StopAllCoroutines();
         t = 0;
-        weaponTrigger.ToggleState(false);
+        weaponTrigger.ColliderOff();
         hijackControls = false;
         currentAttack = null;
         nextAttack = null;
