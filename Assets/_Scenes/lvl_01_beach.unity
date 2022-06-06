@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 5367.0938, g: 3718.6875, b: 3564.2422, a: 1}
+  m_IndirectSpecularColor: {r: 5365.502, g: 3719.3008, b: 3567.586, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -4592,7 +4592,7 @@ MonoBehaviour:
   target: {fileID: 0}
   attackEffects: {fileID: 1986312948}
   groundAttack: {fileID: 11400000, guid: 37d24a0814227454d865b51cd2da4942, type: 2}
-  airAttack: {fileID: 11400000, guid: 9829d04ba3b26994dbca241fb55abcaa, type: 2}
+  airAttack: {fileID: 11400000, guid: 37d24a0814227454d865b51cd2da4942, type: 2}
   rollAttack: {fileID: 11400000, guid: c7a0c1a8ea5bc7f4ab934636a74e88b8, type: 2}
   targetPosOffsetFromPlayer: 1.6
   aimerRadius: 2.1

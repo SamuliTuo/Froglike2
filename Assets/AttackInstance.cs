@@ -60,9 +60,12 @@ public class AttackInstance : MonoBehaviour
         slashObj.transform.localScale = new Vector3(1, width, length);
         slashObj.transform.rotation = rot;
         slashObj.gameObject.SetActive(true);
+        Vector3 playerVelo = Singleton.instance.Player.GetComponent<Rigidbody>().velocity * 0.5f;
         while (t < slashLifeTime)
         {
-            transform.position += slashObj.transform.forward * flySpeed * 0.5f * Time.deltaTime;
+            
+            transform.position += slashObj.transform.forward * flySpeed * Time.deltaTime;
+            transform.position += playerVelo * Time.deltaTime;
             slashObj.localScale = new Vector3(
                 slashObj.localScale.x + Time.deltaTime * growSpeed,
                 slashObj.localScale.y + Time.deltaTime * growSpeed,

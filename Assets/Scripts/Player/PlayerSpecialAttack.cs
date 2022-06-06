@@ -33,7 +33,9 @@ public class PlayerSpecialAttack : MonoBehaviour {
     private PlayerJumping jump;
     private SwordTrigger swordCol;
     private PlayerRolling roll;
+    private PlayerCrawl crawl;
     private PlayerRotate rotate;
+    private PlayerColliderChanges colliders;
     private AttackInstance currentAttackInstance;
     private Animator anim;
     private Rigidbody rb;
@@ -55,7 +57,9 @@ public class PlayerSpecialAttack : MonoBehaviour {
         jump = GetComponent<PlayerJumping>();
         swordCol = GetComponentInChildren<SwordTrigger>();
         roll = GetComponent<PlayerRolling>();
+        crawl = GetComponent<PlayerCrawl>();
         rotate = GetComponentInChildren<PlayerRotate>();
+        colliders = GetComponent<PlayerColliderChanges>();
         anim = GetComponentInChildren<Animator>();
         rb = GetComponent<Rigidbody>();
         model = transform.GetChild(0);
@@ -169,7 +173,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
         currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(
             new Vector3(0, 1.1f, 1.2f),
             Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(new Vector3(0, 0, 100)),
-            1.1f, 1.1f, 6, 5, 0.2f, 0.15f, 1);
+            1.1f, 1.1f, 6, 2.5f, 0.2f, 0.15f, 1);
         StartCoroutine(BaseballSamurai());
         if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
         {
@@ -263,6 +267,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
     }
 
     // TESTS FOR TWEEKING AIMER SIZE:
+    /*
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.green;
@@ -282,18 +287,18 @@ public class PlayerSpecialAttack : MonoBehaviour {
     float aimerDisttt;
     float aimerRadiousss;
     // testing
-
+    */
     IEnumerator BaseballSamurai()
     {
         while (buttonHeld && buttonHeldTime < baseballSamuraiChargeDuration)
         {
             buttonHeldTime += Time.deltaTime;
-
+            /*
             // AIMER SIZE TEST:
             aimerRadiousss = 2.7f + Mathf.Clamp(buttonHeldTime * 1.8f, 1, baseballSamuraiChargeDuration);
             aimerDisttt = 2.3f + Mathf.Clamp(buttonHeldTime * 1.8f, 1, baseballSamuraiChargeDuration);
             // testing
-
+            */
             yield return null;
         }
         if (buttonHeldTime > 0.5f)
@@ -339,9 +344,9 @@ public class PlayerSpecialAttack : MonoBehaviour {
             Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(new Vector3(0, 0, 95)),
             Mathf.Lerp(1.3f, 2, b),
             Mathf.Lerp(1.3f, 2, b),
-            Mathf.Lerp(4.5f, 9, b),
-            Mathf.Lerp(4, 80, b),
-            Mathf.Lerp(0.1f, 0.3f, b),
+            Mathf.Lerp(4.5f, 25, b),
+            Mathf.Lerp(2, 40, b),
+            Mathf.Lerp(0.1f, 0.2f, b),
             0.15f,
             buttonHeldTime);
     }
@@ -393,11 +398,13 @@ public class PlayerSpecialAttack : MonoBehaviour {
         control.SetVelocity(new Vector3(rb.velocity.x, 0, rb.velocity.z));
         control.SetAccelerationMod(1);
         control.moveSpeedMod = 1;
+        colliders.ChangeToSmallCollider();
         if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
         {
             model.rotation = Quaternion.LookRotation(control.GetInput());
         }
         anim.Play("attack_roll", 0, 0);
+        
         hijackControls = true;
         canSlash = false;
         t = 0;
@@ -427,21 +434,29 @@ public class PlayerSpecialAttack : MonoBehaviour {
 
     void EndRollSlash()
     {
-        if (buttonHeld)
+        hijackControls = false;
+        if (colliders.TryToStandUp() == false)
         {
+            rotate.InitRotateSpdModReturn(0.1f);
+            control.InitAccelerationModReturn(0.1f, false);
+            crawl.InitCrawlOnStuckUnder();
+            StopAllCoroutines();
+        }
+        else if (buttonHeld)
+        {
+            colliders.ChangeToStandUpColliders();
             anim.Play("attack_special_2ndPart", 0, 0);
             t = buttonHeldTime = 0.25f;
             control.state = PlayerStates.BASEBALL_SAMURAI;
             takeFirstStep = takeSecondStep = false;
-            hijackControls = false;
             attack.target = null;
             StartCoroutine(BaseballSamurai());
         }
         else
         {
+            colliders.ChangeToStandUpColliders();
             rotate.InitRotateSpdModReturn(0.1f);
             control.InitAccelerationModReturn(0.1f, false);
-            hijackControls = false;
             EndAndCheckIfQueuedAction();
         }
     }
