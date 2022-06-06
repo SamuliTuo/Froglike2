@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+public enum JumpType { NULL, NORMAL, AIR, WALL, ROLL }
+
 public class PlayerJumping : MonoBehaviour {
 
     public int maxLateJumpTimeSteps = 12;
@@ -11,6 +13,7 @@ public class PlayerJumping : MonoBehaviour {
     [HideInInspector] public bool playerCanJump = true;
     [HideInInspector] public bool airJumpUsed = false;
     [HideInInspector] public int lateJumpTimer = 0;
+    [HideInInspector] public JumpType currentJump = JumpType.NULL;
 
     [SerializeField] private int maxEarlyJumpTimeSteps = 12;
     [Space]
@@ -18,9 +21,6 @@ public class PlayerJumping : MonoBehaviour {
     [SerializeField] private float jumpHeight = 4f;
     [SerializeField] private float runHeightMultiplier = 1.2f;
     [SerializeField] private float groundPoundHeightMultiplier = 1.3f;
-    [Header("Extra gravity after jump")]
-    [SerializeField] private float brakeDuration = 0.5f;
-    [SerializeField] private float maxBrakeForce = 10;
     [Header("Walljump")]
     [SerializeField] private float wallJumpHorizontalMult = 0.9f;
     [SerializeField] private float wallJumpMinimumAngle = 66f;
@@ -45,14 +45,11 @@ public class PlayerJumping : MonoBehaviour {
     private Animator anim;
     private Rigidbody rb;
     private Transform graphics;
-    private Coroutine brakeCoroutine = null;
     private bool groundPoundJumpQueued = false;
     private bool normalJumpQueued = false;
     private bool upwardsAirJump = false;
     private int earlyJumpPressTimer = 0;
     private float jumpSpeed;
-    private float brakeT;
-    private float perc;
 
 
     void Start() {
@@ -101,8 +98,9 @@ public class PlayerJumping : MonoBehaviour {
 
         jumpSpeed = Mathf.Sqrt(-2f * Physics.gravity.y * jumpHeight);
         if (control.state == PlayerStates.ROLL) {
-            if (control.PlayerGrounded || lateJumpTimer > 0) {
-                longJump.LongJump();
+            if (playerCanJump && (control.PlayerGrounded || lateJumpTimer > 0)) {
+                RollJump();
+                //longJump.LongJump();
             }
         }
         else if (control.PlayerGrounded || 
@@ -136,6 +134,7 @@ public class PlayerJumping : MonoBehaviour {
     }
 
     void NormalJump() {
+        currentJump = JumpType.NORMAL;
         normalJumpQueued = false;
         Vector3 jumpDir = Vector3.up;
         var velo = control.GetVelocity();
@@ -154,7 +153,25 @@ public class PlayerJumping : MonoBehaviour {
         StartCoroutine(JustJumped());
     }
 
-    void WallJump() {
+    void RollJump() {
+        currentJump = JumpType.ROLL;
+        jumpSpeed *= 0.75f;
+        Vector3 jumpDir = Vector3.up;
+        var velo = control.GetVelocity();
+        float alignSpeedDot = Vector3.Dot(new Vector3(velo.x, 0, velo.z), jumpDir);
+        if (alignSpeedDot > 0f) {
+            jumpSpeed = Mathf.Max(jumpSpeed - alignSpeedDot, 0f);
+        }
+        control.SetVelocity(
+            new Vector3(velo.x * normalJump_moveSpdReduct, 0, velo.z * normalJump_moveSpdReduct) + 
+            (jumpDir * jumpSpeed));
+        StartJumpBrakes();
+        StartCoroutine(JustJumped());
+    }
+
+    public void WallJump() {
+        jumpSpeed = Mathf.Sqrt(-2f * Physics.gravity.y * jumpHeight);
+        currentJump = JumpType.WALL;
         anim.Play("jump", 0, 0);
         //_anim.StraightToJumpAnimation();
         Vector3 wallNormal = new Vector3(control.steepNormal.x, 0, control.steepNormal.z).normalized;
@@ -213,11 +230,18 @@ public class PlayerJumping : MonoBehaviour {
         StartJumpBrakes();
         StartCoroutine(JustJumped());
         control.SetVelocity(dir);
-        rotate.AlignToVelocityForTime(wallJumpRotationAlignDuration);
+        graphics.rotation = Quaternion.LookRotation(new Vector3(dir.x, 0, dir.z), Vector3.up);
+        //rotate.AlignToVelocityForTime(wallJumpRotationAlignDuration);
         control.InitAccelerationModReturn(accelModTimeOnWalljump, true);
     }
 
-    void InitAirJump() {
+    public void InitAirJump() {
+        anim.Play("airDash_upwards", 0, 0);
+        if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
+        {
+            graphics.rotation = Quaternion.LookRotation(control.GetInput(), Vector3.up);
+        }
+        /*
         Vector3 force = InputCheckVec3();
         if (upwardsAirJump) {
             anim.Play("airDash_upwards", 0, 0);
@@ -227,11 +251,14 @@ public class PlayerJumping : MonoBehaviour {
             anim.Play("airDash", 0, 0);
             control.InitAccelerationModReturn(accelModTimeOnAirJump, true);
             graphics.rotation = Quaternion.LookRotation(control.GetInput(), Vector3.up);
-        }
+        }*/
         //rotate.AlignToVelocityForTime(airJumpRotationAlignDuration);
-        control.SetVelocity(Vector3.zero);
+
+        rb.velocity = control.GetInput() * 8 + Vector3.up * airJumpVertiForce;
+        control.SetVelocity(control.GetInput() * 8 + Vector3.up * airJumpVertiForce);
+        /*control.SetVelocity(Vector3.zero);
         rb.velocity = Vector3.zero;
-        rb.AddForce(force, ForceMode.Impulse);
+        rb.AddForce(force, ForceMode.Impulse);*/
         upgrades.JumpUpgrades();
         airJumpUsed = true;
         StartCoroutine(JustJumped());
@@ -272,27 +299,15 @@ public class PlayerJumping : MonoBehaviour {
     }
 
     void StartJumpBrakes() {
-        if (brakeCoroutine != null) {
-            StopCoroutine(brakeCoroutine);
+        if (gravity.brakeCoroutine != null) {
+            StopCoroutine(gravity.brakeCoroutine);
         }
-        brakeCoroutine = StartCoroutine(JumpBrakes());
+        gravity.brakeCoroutine = StartCoroutine(gravity.JumpBrakes());
 
         if (gravity.apexGravCoroutine != null) {
             StopCoroutine(gravity.apexGravCoroutine);
         }
         gravity.apexGravCoroutine = StartCoroutine(gravity.ApexGravMultiplier());
     }
-    IEnumerator JumpBrakes()
-    {
-        brakeT = 0;
-        while (brakeT < brakeDuration)
-        {
-            perc = brakeT / brakeDuration;
-            perc = Mathf.Sin(perc * Mathf.PI * 0.5f);
-            gravity.SetAfterJumpExtraGravMultiplier(Mathf.Lerp(0, maxBrakeForce, perc));
-            brakeT += Time.deltaTime;
-            yield return null;
-        }
-        gravity.SetAfterJumpExtraGravMultiplier(0f);
-    }
+
 }

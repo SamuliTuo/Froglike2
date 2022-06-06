@@ -48,8 +48,8 @@ public class PlayerColliderChanges : MonoBehaviour {
 
     public void ChangeToStandUpColliders() {
         currentCol = colTypes.BIG;
-        col.height = 2f;
-        col.center = Vector3.zero;
+        col.height = 1.8f;
+        col.center = new Vector3(0, -0.1f, 0);
     }
 
     /* // debugging the rays:

@@ -133,7 +133,7 @@ public class PlayerAttacks : MonoBehaviour {
             control.SetVelocity(Vector3.zero);
             rb.velocity = Vector3.zero;
         }
-        else if (control.GetInput().sqrMagnitude > control.deadzoneSquared) {
+        else if (!control.PlayerGrounded && control.GetInput().sqrMagnitude > control.deadzoneSquared) {
             control.SetVelocity(model.forward * currentAttack.stepForce);
         }
         startedMoveReturn = false;
@@ -185,7 +185,12 @@ public class PlayerAttacks : MonoBehaviour {
         float desiredZ = (model.forward * currentAttack.stepForce).z * perc * (2 - attSpdModifier);
         Vector2 currentVelo = new Vector2(currX, currZ);
         Vector2 desiredVelo = new Vector2(desiredX, desiredZ);
-        Vector2 newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, 100);
+        Vector2 newVelo;
+        if (control.PlayerGrounded)
+            newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, 100);
+        else
+            newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, 0.1f);
+        
         return xAxis * (newVelo.x - currX) + zAxis * (newVelo.y - currZ);
     }
 
@@ -252,11 +257,29 @@ public class PlayerAttacks : MonoBehaviour {
                 {
                     anim.speed = 1;
                     weaponTrigger.ColliderOff();
+                    jump.playerJumpPressed = true;
                     hijackControls = false;
+                    nextAttack = null;
+                    currentAttack = null;
                     control.state = PlayerStates.NORMAL;
-                    control.InitAccelerationModReturn(0.3f, false);
-                    rotate.InitRotateSpdModReturn(0.3f);
-                    jump.InitNormalJump();
+                    /*
+                    anim.speed = 1;
+                    weaponTrigger.ColliderOff();
+                    hijackControls = false;
+                    currentAttack = null;
+                    nextAttack = null;
+                    control.state = PlayerStates.NORMAL;
+                    control.SetAccelerationMod(1);
+                    rotate.SetRotateSpdMod(1);
+                    if (control.PlayerGrounded && jump.playerCanJump) {
+                        jump.InitNormalJump();
+                    }
+                    else if (control.PlayerOnSteep) {
+                        jump.WallJump();
+                    }
+                    else if (!control.PlayerGrounded && !jump.airJumpUsed) {
+                        jump.InitAirJump();
+                    }*/
                     yield break;
                 }
             }
