@@ -82,7 +82,6 @@ public class PlayerAbilityUpgrader : MonoBehaviour {
 
     private void Awake()
     {
-        print(Helpers.Cam);
         cursor = Helpers.Cam.GetComponentInParent<HideCursor>();
     }
 

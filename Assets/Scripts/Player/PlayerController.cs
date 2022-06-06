@@ -107,7 +107,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     void Update() {
-        Debug.Log(state);
+        //Debug.Log(state);
         //print(PlayerGrounded);
 
         if (state == PlayerStates.NOT_IN_CONTROL || state == PlayerStates.GRAPPLE) {

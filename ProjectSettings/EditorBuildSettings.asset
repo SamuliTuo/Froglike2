@@ -14,19 +14,4 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Scenes/lvl_02_forest.unity
     guid: f06f667ff15c1aa468cd5c83fdbfd176
-  - enabled: 1
-    path: Assets/_Scenes/lvl_03_bearTown.unity
-    guid: 1f204d4b9bf2aad449214581a81c6678
-  - enabled: 1
-    path: Assets/_Scenes/lvl_04.unity
-    guid: 29b3cd2b4a173164899fe2de9131f6a6
-  - enabled: 1
-    path: Assets/_Scenes/lvl_05.unity
-    guid: 6a2f0ce7dbc724843abd08003b359ffd
-  - enabled: 1
-    path: Assets/_Scenes/lvl_06.unity
-    guid: 08b39ab7f8effa04990773a6392866f6
-  - enabled: 1
-    path: Assets/_Scenes/lvl_07.unity
-    guid: 2f7b996e174fbfe47862b168a01f5fa3
   m_configObjects: {}
