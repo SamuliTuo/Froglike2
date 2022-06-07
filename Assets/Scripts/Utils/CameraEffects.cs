@@ -12,8 +12,11 @@ public class CameraEffects : MonoBehaviour {
     }
 
     void Update() {
+        if (Keyboard.current.digit8Key.wasPressedThisFrame) {
+            Time.timeScale -= 0.1f;
+        }
         if (Keyboard.current.digit9Key.wasPressedThisFrame) {
-            Time.timeScale = 0.1f;
+            Time.timeScale += 0.1f;
         }
         if (Keyboard.current.digit0Key.wasPressedThisFrame) {
             Time.timeScale = 1;

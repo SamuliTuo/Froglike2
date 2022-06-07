@@ -52,7 +52,13 @@ public class PlayerGravity : MonoBehaviour {
         if (attack.hijackControls || special.hijackControls) {
             return;
         }
-
+        if (control.state == PlayerStates.SAMURAI || control.state == PlayerStates.BASEBALL) {
+            if (!control.PlayerGrounded && rb.velocity.y < 0)
+            {
+                rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y * 0.8f, rb.velocity.z);
+            }
+        }
+        
         // Apex:
         _apexPoint = Mathf.InverseLerp(_jumpApexThreshold, 0, Mathf.Abs(rb.velocity.y));
         if (!control.PlayerGrounded && _apexPoint != 0 && jumpPressed)
@@ -88,12 +94,17 @@ public class PlayerGravity : MonoBehaviour {
                 rb.velocity += Vector3.up * Physics.gravity.y * (lowJumpGravMult * dot) * Time.deltaTime;
             }
         }
+        // 
+        CapFallSpeed();
+    }
+
+    void CapFallSpeed()
+    {
         if (rb.velocity.y < -_maxFallSpeed)
         {
             rb.velocity = new Vector3(rb.velocity.x, -_maxFallSpeed, rb.velocity.z);
         }
     }
-
     public void SimpleGravity() {
         if (control.PlayerGrounded && rb.velocity.sqrMagnitude < 0.01f) {
             rb.velocity +=

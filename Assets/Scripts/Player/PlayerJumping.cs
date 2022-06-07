@@ -91,7 +91,8 @@ public class PlayerJumping : MonoBehaviour {
         if (control.state == PlayerStates.ATTACK ||
             control.state == PlayerStates.GROUND_POUND ||
             control.state == PlayerStates.ROLL_SLASH ||
-            control.state == PlayerStates.BASEBALL_SAMURAI ||
+            control.state == PlayerStates.BASEBALL ||
+            control.state == PlayerStates.SAMURAI ||
             control.state == PlayerStates.LONG_JUMP) {
             return;
         }

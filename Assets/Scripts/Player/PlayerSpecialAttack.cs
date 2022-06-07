@@ -12,13 +12,14 @@ public class PlayerSpecialAttack : MonoBehaviour {
     [Header("Baseball Samurai")]
     [SerializeField] private float baseballSamuraiChargeDuration = 2;
     [Space]
-    [SerializeField] private float firstStepActivateTime = 0.2f;
-    [SerializeField] private float firstStepMoveForce = 80f;
-    [SerializeField] private float secondStepMoveForce = 150f;
+    [SerializeField] private float stepMinimumForce = 150f;
+    [SerializeField] private float stepMaximumForceMult = 5f;
+    [SerializeField] private float maxChargeRotationMult = 0.5f;
     [Space]
-    [SerializeField] private float firstHitActivateTime = 0.1f;
+    [SerializeField] private float firstHitboxActivateTime = 0.1f;
     [SerializeField] private float firstHitHitboxLifetime = 0.2f;
-    [SerializeField] private float secondHitActivateTime = 0.3f;
+    [SerializeField] private float firstHitDuration = 0.458f;
+    [SerializeField] private float secondHitboxActivateTime = 0.3f;
     [SerializeField] private float secondHitHitboxLifetime = 0.4f;
     [SerializeField] private float secondHitDuration = 0.4f;
     [Header("Roll Slash")]
@@ -42,11 +43,11 @@ public class PlayerSpecialAttack : MonoBehaviour {
     private Transform model;
     private Vector3 groundPoundLastLocation;
     private bool buttonHeld = false;
-    private bool takeFirstStep = false;
-    private bool takeSecondStep = false;
+    private bool takeStep = false;
+    private bool takeAimedStep = false;
     private bool groundPoundEnding = false;
     private bool attackQueued, rollQueued, specialQueued, jumpQueued = false;
-    private float t, buttonHeldTime, perc, stepTwoStartTime;
+    private float t, buttonHeldTime, perc;
 
 
     void Start() 
@@ -72,14 +73,13 @@ public class PlayerSpecialAttack : MonoBehaviour {
         if (!buttonHeld)
             return;
 
-        if (control.state == PlayerStates.GROUND_POUND) 
+        if (control.state == PlayerStates.GROUND_POUND ||
+            control.state == PlayerStates.BASEBALL ||
+            control.state == PlayerStates.SAMURAI ||
+            control.state == PlayerStates.ROLL_SLASH) 
         {
             specialQueued = true;
             attackQueued = rollQueued = jumpQueued = false;
-            return;
-        }
-        else if (control.state == PlayerStates.ROLL_SLASH || control.state == PlayerStates.BASEBALL_SAMURAI)
-        {
             return;
         }
 
@@ -87,7 +87,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
     }
     void OnRoll()
     {
-        if (control.state == PlayerStates.GROUND_POUND || control.state == PlayerStates.ROLL_SLASH || control.state == PlayerStates.BASEBALL_SAMURAI)
+        if (control.state == PlayerStates.GROUND_POUND || control.state == PlayerStates.ROLL_SLASH || control.state == PlayerStates.BASEBALL || control.state == PlayerStates.SAMURAI)
         {
             rollQueued = true;
             attackQueued = specialQueued = jumpQueued = false;
@@ -95,7 +95,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
     }
     void OnAttack()
     {
-        if (control.state == PlayerStates.GROUND_POUND || control.state == PlayerStates.ROLL_SLASH || control.state == PlayerStates.BASEBALL_SAMURAI)
+        if (control.state == PlayerStates.GROUND_POUND || control.state == PlayerStates.ROLL_SLASH || control.state == PlayerStates.BASEBALL || control.state == PlayerStates.SAMURAI)
         {
             attackQueued = true;
             specialQueued = rollQueued = jumpQueued = false;
@@ -118,14 +118,19 @@ public class PlayerSpecialAttack : MonoBehaviour {
     {
         jumpQueued = attackQueued = rollQueued = specialQueued = false;
 
+        if (canSlash == false)
+        {
+            control.state = PlayerStates.NORMAL;
+            return;
+        }
         if (control.state == PlayerStates.NORMAL &&
             (control.PlayerGrounded || control.stepsSinceLastGrounded < 3))
         {
-            StartBaseballSamurai();
+            StartBaseballSamurai(PlayerStates.BASEBALL);
         }
-        else if (canSlash && (control.state == PlayerStates.ROLL || (control.state == PlayerStates.NORMAL && control.stepsSinceLastGrounded >= 3)))
+        else if (control.state == PlayerStates.ROLL || (control.state == PlayerStates.NORMAL && control.stepsSinceLastGrounded >= 3))
         {
-            StartRollSlash();
+            StartBaseballSamurai(PlayerStates.SAMURAI); // StartRollSlash();
         }
         /*else if (control.state == PlayerStates.NORMAL &&
             !control.PlayerGrounded &&
@@ -139,109 +144,85 @@ public class PlayerSpecialAttack : MonoBehaviour {
 
     public void SpecialFixedUpdate() 
     {
+        /*
         if (control.state == PlayerStates.ROLL_SLASH)
             RollSlashFixed();
-        else if (control.state == PlayerStates.GROUND_POUND)
+        */
+        if (control.state == PlayerStates.GROUND_POUND)
             GroundPoundFixed();
-        else if (control.state == PlayerStates.BASEBALL_SAMURAI && hijackControls)
+        else if ((control.state == PlayerStates.BASEBALL || control.state == PlayerStates.SAMURAI) && hijackControls)
             BaseballSamuraiMovementWithTarget();
     }
 
-    public void Reset()
+    public void ResetSpecial()
     {
         StopAllCoroutines();
+        Time.timeScale = 1;
         t = buttonHeldTime = 0;
         hijackControls = false;
+        jumpQueued = attackQueued = rollQueued = specialQueued = false;
+        takeStep = takeAimedStep = false;
     }
 
     // Baseball Samurai ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    public void StartBaseballSamurai()
+    public void StartBaseballSamurai(PlayerStates state)
     {
-        control.state = PlayerStates.BASEBALL_SAMURAI;
-        anim.Play("attack_special_1stPart", 0, 0);
-        takeFirstStep = takeSecondStep = false;
+        StopAllCoroutines();
+        canSlash = false;
+        jumpQueued = attackQueued = rollQueued = specialQueued = false;
+        control.state = state;
+        if (state == PlayerStates.BASEBALL)
+            anim.CrossFade("attack_special_baseballCharge", 0.25f, 0);
+        else if (state == PlayerStates.SAMURAI)
+            anim.CrossFade("attack_special_samuraiCharge", 0.25f, 0);
+
+        takeStep = takeAimedStep = false;
         t = buttonHeldTime = 0;
-        attack.target = null;
-        if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
-        {
-            model.rotation = Quaternion.LookRotation(attack.AimAndChooseTarget(3.7f, 3.3f));
-        }
-        if (attack.target != null) {
-            hijackControls = true;
+        if (control.GetInput().sqrMagnitude > control.deadzoneSquared) {
+            model.rotation = Quaternion.LookRotation(control.GetInput(), Vector3.up);
         }
         rotate.SetRotateSpdMod(0f);
-        currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(
-            new Vector3(0, 1.1f, 1.2f),
-            Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(new Vector3(0, 0, 100)),
-            1.1f, 1.1f, 6, 2.5f, 0.2f, 0.15f, 1);
-        StartCoroutine(BaseballSamurai());
-        if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
-        {
-            StartCoroutine(Samurai1stStepTiming());
-        }
-        StartCoroutine(BaseballSamurai1stHitHitboxes());
+        StartCoroutine(BaseballSamurai(state));
     }
 
     public Vector3 BaseballSamuraiMovement(
         Vector3 xAxis, float currX, Vector3 zAxis, float currZ)
     {
-        if (takeFirstStep) 
+        if (takeStep) 
         {
-            rb.AddForce(model.forward * firstStepMoveForce, ForceMode.Impulse);
-            takeFirstStep = false;
+            Step();
         }
-        if (takeSecondStep)
-        {
-            if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
-            {
-                model.rotation = Quaternion.LookRotation(control.GetInput());
-            }
-            if (rb.velocity.y < 0)
-            {
-                rb.AddForce(Vector3.up * -rb.velocity.y * rb.mass, ForceMode.Impulse);
-            }
-            rb.AddForce(control.GetInput().normalized * secondStepMoveForce * buttonHeldTime, ForceMode.Impulse);
-            takeSecondStep = false;
-            t = baseballSamuraiChargeDuration * 0.15f;
-        }
-
-        float perc = 0;
-        if (t < baseballSamuraiChargeDuration)
-        {
-            perc = 1 - t / baseballSamuraiChargeDuration;
-        }
-        t += Time.deltaTime;
-
-        float desiredX = control.GetRelativeVelo().x * perc;
-        float desiredZ = control.GetRelativeVelo().z * perc;
+        float desiredX = control.GetRelativeVelo().x * 0.8f; //Mathf.Lerp(0.8f, 1, buttonHeldTime / baseballSamuraiChargeDuration);
+        float desiredZ = control.GetRelativeVelo().z * 0.8f; //Mathf.Lerp(0.8f, 1, buttonHeldTime / baseballSamuraiChargeDuration);
         Vector2 currentVelo = new Vector2(currX, currZ);
         Vector2 desiredVelo = new Vector2(desiredX, desiredZ);
         Vector2 newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, 100);
         return xAxis * (newVelo.x - currX) + zAxis * (newVelo.y - currZ);
     }
 
+    void Step()
+    {
+        if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
+        {
+            model.rotation = Quaternion.LookRotation(control.GetInput());
+        }
+        if (rb.velocity.y < 0)
+        {
+            rb.AddForce(Vector3.up * -rb.velocity.y * rb.mass, ForceMode.Impulse);
+        }
+        rb.AddForce(control.GetInput().normalized * stepMinimumForce * Mathf.Lerp(1, stepMaximumForceMult, buttonHeldTime / baseballSamuraiChargeDuration), ForceMode.Impulse);
+        takeStep = takeAimedStep = false;
+    }
+
     public void BaseballSamuraiMovementWithTarget()
     {
-        if (t < 0.2f)
-        {
-            AimedStep();
-        }
-        else if (takeSecondStep == false)
-        {
-            takeFirstStep = false;
-            rb.velocity = Vector3.zero;
-            control.SetVelocity(Vector3.zero);
-            hijackControls = false;
-        }
-        else if (t < stepTwoStartTime + 0.2f)
+        if (takeAimedStep && t < 0.2f)
         {
             AimedStep();
         }
         else
         {
-            takeSecondStep = false;
-            rb.velocity = Vector3.zero;
-            control.SetVelocity(Vector3.zero);
+            takeStep = takeAimedStep = false;
             hijackControls = false;
         }
         t += Time.deltaTime;
@@ -260,128 +241,144 @@ public class PlayerSpecialAttack : MonoBehaviour {
             attack.target.position.z - transform.position.z).normalized);
     }
 
-    IEnumerator Samurai1stStepTiming()
+    IEnumerator BaseballSamurai(PlayerStates state)
     {
-        yield return Helpers.GetWait(firstStepActivateTime);
-        takeFirstStep = true;
-    }
-
-    // TESTS FOR TWEEKING AIMER SIZE:
-    /*
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.green;
-        if (control != null)
-        {
-            if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
-            {
-                Gizmos.DrawWireSphere(transform.position + control.GetInput() * aimerDisttt, aimerRadiousss);
-            }
-        }
-        else
-        {
-            Gizmos.DrawWireSphere(transform.position + transform.GetChild(0).forward * aimerDisttt, aimerRadiousss);
-        }
+        // Charge - 1st hit
         
-    }
-    float aimerDisttt;
-    float aimerRadiousss;
-    // testing
-    */
-    IEnumerator BaseballSamurai()
-    {
         while (buttonHeld && buttonHeldTime < baseballSamuraiChargeDuration)
         {
-            buttonHeldTime += Time.deltaTime;
-            /*
-            // AIMER SIZE TEST:
-            aimerRadiousss = 2.7f + Mathf.Clamp(buttonHeldTime * 1.8f, 1, baseballSamuraiChargeDuration);
-            aimerDisttt = 2.3f + Mathf.Clamp(buttonHeldTime * 1.8f, 1, baseballSamuraiChargeDuration);
-            // testing
-            */
+            RotateWhileCharging();
+            buttonHeldTime += Time.unscaledDeltaTime;
+            if (control.PlayerGrounded == false)
+                Time.timeScale = Mathf.Lerp(0.7f, 0f, buttonHeldTime / baseballSamuraiChargeDuration);
+            else
+                Time.timeScale = Mathf.Lerp(1, 0f, buttonHeldTime / baseballSamuraiChargeDuration);
+                
             yield return null;
         }
-        if (buttonHeldTime > 0.5f)
+        Time.timeScale = 1;
+        BaseballSamuraiHitboxTiming(state);
+        rotate.SetRotateSpdMod(0);
+        if (state == PlayerStates.BASEBALL)
+            anim.Play("attack_special_baseballSwing", 0, 0);
+        else if (state == PlayerStates.SAMURAI)
+            anim.Play("attack_special_samuraiSwing", 0, 0);
+        
+        attack.target = null;
+        if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
         {
-            StartCoroutine(BaseballSamurai2ndHitHitboxes());
-            anim.Play("attack_special_3rdPart", 0, 0);
-            attack.target = null;
-            if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
-            {
-                model.rotation = Quaternion.LookRotation(attack.AimAndChooseTarget(
-                    2.1f + Mathf.Clamp(buttonHeldTime * 1.8f, 1, baseballSamuraiChargeDuration),
-                    1.7f + Mathf.Clamp(buttonHeldTime * 1.8f, 1, baseballSamuraiChargeDuration)));
-            }
-            if (attack.target != null)
-            {
-                stepTwoStartTime = t;
-                hijackControls = true;
-                SecondSlash();
-            }
-            else
-            {
-                hijackControls = false;
-                SecondSlash();
-            }
-            takeSecondStep = true;
+            model.rotation = Quaternion.LookRotation(attack.AimAndChooseTarget(
+                2.1f + Mathf.Clamp(buttonHeldTime * 1.8f, 1, baseballSamuraiChargeDuration),
+                1.7f + Mathf.Clamp(buttonHeldTime * 1.8f, 1, baseballSamuraiChargeDuration)));
+        }
+        if (attack.target != null) {
+            takeAimedStep = true;
+            hijackControls = true;
+        }
+        else {
+            takeStep = true;
+            hijackControls = false;
+        }
+        SpawnSlashEffect(state);
+        if (state == PlayerStates.BASEBALL)
+            yield return Helpers.GetWait(firstHitDuration);
+        else if (state == PlayerStates.SAMURAI)
             yield return Helpers.GetWait(secondHitDuration);
-            EndBaseballSamurai();
+
+
+        if (specialQueued && canSlash)
+        {
+            print("special queued starting");
+            if (state == PlayerStates.BASEBALL)
+                StartBaseballSamurai(PlayerStates.SAMURAI);
+            else if (state == PlayerStates.SAMURAI)
+                StartBaseballSamurai(PlayerStates.BASEBALL);
         }
         else
         {
-            while (!anim.GetCurrentAnimatorStateInfo(0).IsName("attack_special_2ndPart"))
-            {
-                yield return null;
-            }
+            print("end special");
             EndBaseballSamurai();
         }
     }
-    void SecondSlash()
+
+    void RotateWhileCharging()
     {
-        float b = buttonHeldTime / 2.5f;
-        currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(
-            new Vector3(0, 0.75f, 1.2f),
-            Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(new Vector3(0, 0, 95)),
-            Mathf.Lerp(1.3f, 2, b),
-            Mathf.Lerp(1.3f, 2, b),
-            Mathf.Lerp(4.5f, 25, b),
-            Mathf.Lerp(2, 40, b),
-            Mathf.Lerp(0.1f, 0.2f, b),
-            0.15f,
-            buttonHeldTime);
+        var p = buttonHeldTime / baseballSamuraiChargeDuration;
+        p *= p;
+        rotate.SetRotateSpdMod(p * maxChargeRotationMult);
     }
-    IEnumerator BaseballSamurai1stHitHitboxes()
+
+    void SpawnSlashEffect(PlayerStates state)
     {
-        yield return Helpers.GetWait(firstHitActivateTime);
-        if (swordCol.triggerEnabled == false)
+        if (state == PlayerStates.BASEBALL)
         {
-            swordCol.ColliderOn(currentAttackInstance);
+            float b = buttonHeldTime / 2.5f;
+            currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(
+                new Vector3(0, 0.75f, 1.2f),
+                Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(new Vector3(0, 0, 95)),
+                Mathf.Lerp(1.3f, 2, b),
+                Mathf.Lerp(1.3f, 2, b),
+                Mathf.Lerp(4.5f, 25, b),
+                Mathf.Lerp(2, 40, b),
+                Mathf.Lerp(0.1f, 0.2f, b),
+                0.15f,
+                buttonHeldTime);
         }
-        yield return Helpers.GetWait(firstHitHitboxLifetime);
-        if (swordCol.triggerEnabled == true)
+        else if (state == PlayerStates.SAMURAI)
         {
-            swordCol.ColliderOff();
+            float b = buttonHeldTime / 2.5f;
+            currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(
+                new Vector3(0, 0.75f, 1.2f),
+                Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(new Vector3(0, 0, 95)),
+                Mathf.Lerp(1.3f, 2, b),
+                Mathf.Lerp(1.3f, 2, b),
+                Mathf.Lerp(4.5f, 25, b),
+                Mathf.Lerp(2, 40, b),
+                Mathf.Lerp(0.1f, 0.2f, b),
+                0.15f,
+                buttonHeldTime);
         }
     }
-    IEnumerator BaseballSamurai2ndHitHitboxes()
+
+    IEnumerator BaseballSamuraiHitboxTiming(PlayerStates state)
     {
-        yield return Helpers.GetWait(secondHitActivateTime);
-        if (swordCol.triggerEnabled == false)
+        if (state == PlayerStates.BASEBALL)
         {
-            swordCol.ColliderOn(currentAttackInstance);
+            yield return Helpers.GetWait(firstHitboxActivateTime);
+            if (swordCol.triggerEnabled == false)
+            {
+                swordCol.ColliderOn(currentAttackInstance);
+            }
+            yield return Helpers.GetWait(firstHitHitboxLifetime);
+            if (swordCol.triggerEnabled == true)
+            {
+                swordCol.ColliderOff();
+            }
         }
-        yield return Helpers.GetWait(secondHitHitboxLifetime);
-        if (swordCol.triggerEnabled == true)
+
+        else if (state == PlayerStates.SAMURAI)
         {
-            swordCol.ColliderOff();
+            yield return Helpers.GetWait(secondHitboxActivateTime);
+            if (swordCol.triggerEnabled == false)
+            {
+                swordCol.ColliderOn(currentAttackInstance);
+            }
+            yield return Helpers.GetWait(secondHitHitboxLifetime);
+            if (swordCol.triggerEnabled == true)
+            {
+                swordCol.ColliderOff();
+            }
         }
     }
+
     public void EndBaseballSamurai()
     {
+        Time.timeScale = 1;
         control.InitAccelerationModReturn(0.15f, false);
         rotate.InitRotateSpdModReturn(0.15f);
         hijackControls = false;
         attack.target = null;
+        takeStep = takeAimedStep = false;
         if (swordCol.triggerEnabled == true)
         {
             swordCol.ColliderOff();
@@ -390,8 +387,10 @@ public class PlayerSpecialAttack : MonoBehaviour {
     }
 
     // Roll slash ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    /*
     void StartRollSlash() 
     {
+        StopAllCoroutines();
         control.state = PlayerStates.ROLL_SLASH;
         roll.StopRoll();
         rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
@@ -448,7 +447,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
             anim.Play("attack_special_2ndPart", 0, 0);
             t = buttonHeldTime = 0.25f;
             control.state = PlayerStates.BASEBALL_SAMURAI;
-            takeFirstStep = takeSecondStep = false;
+            takeStep = takeAimedStep = false;
             attack.target = null;
             StartCoroutine(BaseballSamurai());
         }
@@ -460,7 +459,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
             EndAndCheckIfQueuedAction();
         }
     }
-
+    */
     //attack_special_2ndPart
 
     // Ground pound ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -556,7 +555,6 @@ public class PlayerSpecialAttack : MonoBehaviour {
 
     void EndAndCheckIfQueuedAction()
     {
-        control.state = PlayerStates.NORMAL;
         StopAllCoroutines();
         if (attackQueued)
         {
@@ -573,6 +571,10 @@ public class PlayerSpecialAttack : MonoBehaviour {
         else if (jumpQueued)
         {
             jump.InitGroundPoundJump();
+        }
+        else
+        {
+            control.state = PlayerStates.NORMAL;
         }
     }
 }

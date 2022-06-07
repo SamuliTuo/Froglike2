@@ -9,7 +9,8 @@ public enum PlayerStates{
     ROLL,
     CRAWL,
     ATTACK,
-    BASEBALL_SAMURAI,
+    BASEBALL,
+    SAMURAI,
     ROLL_SLASH,
     GROUND_POUND,
     CLIMB,
@@ -109,6 +110,7 @@ public class PlayerController : MonoBehaviour {
     void Update() {
         //Debug.Log(state);
         //print(PlayerGrounded);
+        //print("State = " + state + ",  attack hijack = " + attack.hijackControls + ",  special hijack = " + special.hijackControls);
 
         if (state == PlayerStates.NOT_IN_CONTROL || state == PlayerStates.GRAPPLE) {
             return;
@@ -224,7 +226,7 @@ public class PlayerController : MonoBehaviour {
             velocity += attack.AttackWithoutTargetVector3(xAx, currentX, zAx, currentZ);
             return;
         }
-        else if (state == PlayerStates.BASEBALL_SAMURAI) {
+        else if (state == PlayerStates.BASEBALL || state == PlayerStates.SAMURAI) {
             velocity += special.BaseballSamuraiMovement(xAx, currentX, zAx, currentZ);
             return;
         }
@@ -428,7 +430,7 @@ public class PlayerController : MonoBehaviour {
         if (state == PlayerStates.CLIMB) {
             climb.StopClimb();
         }
-        special.Reset();
+        special.ResetSpecial();
         grapple.InterruptGrapple();
         tongue.InterruptTonguePull();
         Singleton.instance.CameraChanger.ToggleLongJumpCamera(false);

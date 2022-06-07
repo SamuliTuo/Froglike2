@@ -243,7 +243,13 @@ public class PlayerAttacks : MonoBehaviour {
                 else if (specialQueued) {
                     anim.speed = 1;
                     weaponTrigger.ColliderOff();
-                    special.StartBaseballSamurai();
+                    if (currentAttack.animatorStateName == "attack_rose01")
+                        special.StartBaseballSamurai(PlayerStates.SAMURAI);
+                    else if (currentAttack.animatorStateName == "attack_rose02")
+                        special.StartBaseballSamurai(PlayerStates.BASEBALL);
+                    else if (currentAttack.animatorStateName == "attack_rose03")
+                        special.StartBaseballSamurai(PlayerStates.SAMURAI);
+                    hijackControls = false;
                     yield break;
                 }
                 else if (rollQueued) {
