@@ -241,7 +241,6 @@ public class PlayerSpecialAttack : MonoBehaviour {
             attack.target.position.z - transform.position.z).normalized);
     }
 
-    float chargePerc;
     bool startedGrounded;
     IEnumerator BaseballSamurai(PlayerStates state)
     {
@@ -255,17 +254,18 @@ public class PlayerSpecialAttack : MonoBehaviour {
         {
             RotateWhileCharging();
             buttonHeldTime += Time.unscaledDeltaTime;
-            chargePerc = buttonHeldTime / baseballSamuraiChargeDuration;
+            perc = buttonHeldTime / baseballSamuraiChargeDuration;
+            perc = Mathf.Sin(perc * Mathf.PI * 0.5f); //ease out
             if (startedGrounded)
             {
-                Time.timeScale = Mathf.Lerp(1, 0f, chargePerc);
-                anim.speed = Mathf.Lerp(1, 3, chargePerc);
+                Time.timeScale = Mathf.Lerp(0.9f, 0.1f, perc);
+                anim.speed = Mathf.Lerp(1.1f, 4, perc);
             }
             else
             {
-                Time.timeScale = Mathf.Lerp(0.7f, 0f, chargePerc);
-                anim.speed = Mathf.Lerp(1, 6, chargePerc);
-            }    
+                Time.timeScale = Mathf.Lerp(0.65f, 0.1f, perc);
+                anim.speed = Mathf.Lerp(1.6f, 4, perc);
+            }
             yield return null;
         }
         anim.speed = 1;
@@ -301,7 +301,6 @@ public class PlayerSpecialAttack : MonoBehaviour {
 
         if (specialQueued && canSlash)
         {
-            print("special queued starting");
             if (state == PlayerStates.BASEBALL)
                 StartBaseballSamurai(PlayerStates.SAMURAI);
             else if (state == PlayerStates.SAMURAI)
@@ -309,7 +308,6 @@ public class PlayerSpecialAttack : MonoBehaviour {
         }
         else
         {
-            print("end special");
             EndBaseballSamurai();
         }
     }

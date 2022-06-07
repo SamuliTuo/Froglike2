@@ -12,6 +12,7 @@ public class PlayerCarrying : MonoBehaviour {
     [SerializeField] private float throwForceForward = 10f;
     [SerializeField] private float throwForceUp = 0.33f;
     [SerializeField] private float dropForceForward = 1f;
+    [SerializeField] private float dropForceRight = 1f;
     [SerializeField] private float dropForceUp = 1f;
 
     private PlayerController control;
@@ -139,11 +140,12 @@ public class PlayerCarrying : MonoBehaviour {
     }
 
     void DropObj() {
+        objHeld.position += -transform.GetChild(0).right * posOffset;
         Physics.IgnoreCollision(col, objHeld.GetComponent<Collider>(), false);
         objRB.useGravity = true;
         objRB.velocity =
-            transform.GetChild(0).forward * dropForceForward -
-            transform.GetChild(0).right * dropForceForward +
+            transform.GetChild(0).forward * dropForceForward +
+            transform.GetChild(0).right * dropForceRight +
             Vector3.up * dropForceUp;
         objHeld = null;
         control.state = PlayerStates.NORMAL;

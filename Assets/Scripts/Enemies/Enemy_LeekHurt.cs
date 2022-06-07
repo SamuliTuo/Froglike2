@@ -97,7 +97,7 @@ public class Enemy_LeekHurt : MonoBehaviour {
     public bool LerpKnockBack() {
         if (t < 1) {
             //if (agent.velocity.sqrMagnitude > 0.5f) {
-            transform.rotation = Quaternion.LookRotation(new Vector3(-kbDir.x, transform.position.y, -kbDir.z));
+            transform.rotation = Quaternion.LookRotation(new Vector3(-kbDir.x, 0, -kbDir.z));
             //}
             agent.speed = Mathf.Lerp(3 * kbForce, 0, t);
             t += Time.deltaTime;
