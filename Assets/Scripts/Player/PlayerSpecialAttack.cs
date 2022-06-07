@@ -241,21 +241,34 @@ public class PlayerSpecialAttack : MonoBehaviour {
             attack.target.position.z - transform.position.z).normalized);
     }
 
+    float chargePerc;
+    bool startedGrounded;
     IEnumerator BaseballSamurai(PlayerStates state)
     {
         // Charge - 1st hit
-        
+        if (control.PlayerGrounded)
+            startedGrounded = true;
+        else
+            startedGrounded = false;
+
         while (buttonHeld && buttonHeldTime < baseballSamuraiChargeDuration)
         {
             RotateWhileCharging();
             buttonHeldTime += Time.unscaledDeltaTime;
-            if (control.PlayerGrounded == false)
-                Time.timeScale = Mathf.Lerp(0.7f, 0f, buttonHeldTime / baseballSamuraiChargeDuration);
+            chargePerc = buttonHeldTime / baseballSamuraiChargeDuration;
+            if (startedGrounded)
+            {
+                Time.timeScale = Mathf.Lerp(1, 0f, chargePerc);
+                anim.speed = Mathf.Lerp(1, 3, chargePerc);
+            }
             else
-                Time.timeScale = Mathf.Lerp(1, 0f, buttonHeldTime / baseballSamuraiChargeDuration);
-                
+            {
+                Time.timeScale = Mathf.Lerp(0.7f, 0f, chargePerc);
+                anim.speed = Mathf.Lerp(1, 6, chargePerc);
+            }    
             yield return null;
         }
+        anim.speed = 1;
         Time.timeScale = 1;
         BaseballSamuraiHitboxTiming(state);
         rotate.SetRotateSpdMod(0);

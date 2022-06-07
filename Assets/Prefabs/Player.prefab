@@ -1206,12 +1206,13 @@ MonoBehaviour:
   canSlash: 1
   specialCooldown: 0.2
   baseballSamuraiChargeDuration: 2.5
-  firstStepActivateTime: 0.1
-  firstStepMoveForce: 100
-  secondStepMoveForce: 180
-  firstHitActivateTime: 0.06
+  stepMinimumForce: 250
+  stepMaximumForceMult: 5
+  maxChargeRotationMult: 0.5
+  firstHitboxActivateTime: 0.1
   firstHitHitboxLifetime: 0.22
-  secondHitActivateTime: 0.05
+  firstHitDuration: 0.458
+  secondHitboxActivateTime: 0.3
   secondHitHitboxLifetime: 0.2
   secondHitDuration: 0.4
   rollSlashDuration: 0.33
@@ -1316,7 +1317,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hpBar: {fileID: 0}
-  maxHP: 9
+  maxHP: 999
 --- !u!114 &168555317770232269
 MonoBehaviour:
   m_ObjectHideFlags: 0
