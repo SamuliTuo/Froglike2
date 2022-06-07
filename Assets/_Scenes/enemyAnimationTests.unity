@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 5368.373, g: 3718.1406, b: 3559.336, a: 1}
+  m_IndirectSpecularColor: {r: 5377.0293, g: 3724.332, b: 3561.8438, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -4299,7 +4299,7 @@ MonoBehaviour:
     ModeOverride: 0
     LensShift: {x: 0, y: 0}
     GateFit: 2
-    m_SensorSize: {x: 1.3969145, y: 1}
+    m_SensorSize: {x: 1.4821428, y: 1}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 16
@@ -6739,7 +6739,7 @@ MonoBehaviour:
     ModeOverride: 0
     LensShift: {x: 0, y: 0}
     GateFit: 2
-    m_SensorSize: {x: 1.3969145, y: 1}
+    m_SensorSize: {x: 1.4821428, y: 1}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 16
@@ -11679,7 +11679,7 @@ MonoBehaviour:
     ModeOverride: 0
     LensShift: {x: 0, y: 0}
     GateFit: 2
-    m_SensorSize: {x: 1.3969145, y: 1}
+    m_SensorSize: {x: 1.4821428, y: 1}
     Iso: 200
     ShutterSpeed: 0.005
     Aperture: 16
@@ -13479,6 +13479,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 168555317770232266, guid: e42fa5b03fe260d40ad161644a597857, type: 3}
+      propertyPath: hpBar
+      value: 
+      objectReference: {fileID: 823189118}
     - target: {fileID: 168555317770232283, guid: e42fa5b03fe260d40ad161644a597857, type: 3}
       propertyPath: m_RootOrder
       value: 5

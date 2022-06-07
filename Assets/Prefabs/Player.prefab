@@ -1237,7 +1237,8 @@ MonoBehaviour:
   throwForceForward: 11
   throwForceUp: 7
   dropForceForward: 2
-  dropForceUp: 3
+  dropForceRight: 1
+  dropForceUp: 5
 --- !u!114 &168555317770232277
 MonoBehaviour:
   m_ObjectHideFlags: 0
