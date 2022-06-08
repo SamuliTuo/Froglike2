@@ -894,6 +894,7 @@ GameObject:
   - component: {fileID: 168555317770232272}
   - component: {fileID: 168555317770232274}
   - component: {fileID: 168555317770232266}
+  - component: {fileID: 6899321237300122559}
   - component: {fileID: 168555317770232269}
   - component: {fileID: 168555317770232265}
   - component: {fileID: 168555317770232264}
@@ -1065,7 +1066,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   running: 0
   runMultiplier: 1
-  maxRunSpeedMult: 0.45
+  maxRunSpeedMult: 0.6
   runSpeedAccelRate: 5
   runSpeedDecelRate: 15
   toggleRunOffTimerMax: 0.1
@@ -1090,7 +1091,7 @@ MonoBehaviour:
   maxEarlyJumpTimeSteps: 12
   normalJump_moveSpdReduct: 0.75
   jumpHeight: 19
-  runHeightMultiplier: 0.8
+  runHeightMultiplier: 0.65
   groundPoundHeightMultiplier: 1.25
   wallJumpHorizontalMult: 0.9
   wallJumpMinimumAngle: 66
@@ -1204,9 +1205,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hijackControls: 0
-  canSlash: 1
   specialCooldown: 0.2
-  maxChargeDuration: 2
+  maxChargeDuration: 2.43
+  chargingStaminaCost: 0.33
+  airSlashInitialStaminaCost: 0.2
   stepMinimumForce: 250
   stepMaximumForceMult: 5
   maxChargeRotationMult: 0.5
@@ -1320,6 +1322,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hpBar: {fileID: 0}
   maxHP: 999
+--- !u!114 &6899321237300122559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 168555317770232102}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0badfb38c9d596643a21b366bdbe4fb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  groundRegenRate: 2.5
+  airRegenRate: 0.01
+  stepsUntilRegen: 35
+  stepsUntilDecay: 6
+  stepsUntilDisappearWhenFull: 9
+  StaminaFlashDuration: 0.2
 --- !u!114 &168555317770232269
 MonoBehaviour:
   m_ObjectHideFlags: 0

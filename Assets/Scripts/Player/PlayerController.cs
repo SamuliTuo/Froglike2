@@ -297,7 +297,6 @@ public class PlayerController : MonoBehaviour {
                 contactNormal += normal;
                 connectedRb = col.rigidbody;
                 roll.canRoll = true;
-                special.canSlash = true;
                 jump.airJumpUsed = false;
                 jump.lateJumpTimer = jump.maxLateJumpTimeSteps;
             }

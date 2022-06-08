@@ -11,6 +11,8 @@ public class PlayerHP : MonoBehaviour {
     private float hp;
 
     void Start() {
+        hpBar = GameObject.Find("Canvas_UI").transform.Find("PlayerStamina").GetChild(1).GetComponent<Image>();
+
         hp = maxHP;
     }
 

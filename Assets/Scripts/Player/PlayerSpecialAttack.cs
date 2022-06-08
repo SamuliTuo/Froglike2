@@ -6,11 +6,12 @@ using UnityEngine.InputSystem;
 public class PlayerSpecialAttack : MonoBehaviour {
 
     [HideInInspector] public bool hijackControls = false;
-    [HideInInspector] public bool canSlash = true;
 
     [SerializeField] private float specialCooldown = 0.5f;
     [Header("Baseball Samurai")]
     [SerializeField] private float maxChargeDuration = 2;
+    [SerializeField] private float chargingStaminaCost = 0.01f;
+    [SerializeField] private float airSlashInitialStaminaCost = 0.25f;
     [Space]
     [SerializeField] private float stepMinimumForce = 150f;
     [SerializeField] private float stepMaximumForceMult = 5f;
@@ -32,6 +33,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
     private PlayerGravity gravity;
     private PlayerAttacks attack;
     private PlayerJumping jump;
+    private PlayerStamina stamina;
     private SwordTrigger swordCol;
     private PlayerRolling roll;
     private PlayerCrawl crawl;
@@ -62,6 +64,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
         gravity = GetComponent<PlayerGravity>();
         attack = GetComponent<PlayerAttacks>();
         jump = GetComponent<PlayerJumping>();
+        stamina = GetComponent<PlayerStamina>();
         swordCol = GetComponentInChildren<SwordTrigger>();
         roll = GetComponent<PlayerRolling>();
         crawl = GetComponent<PlayerCrawl>();
@@ -125,11 +128,13 @@ public class PlayerSpecialAttack : MonoBehaviour {
     {
         jumpQueued = attackQueued = rollQueued = specialQueued = false;
 
-        if (canSlash == false)
+        if (stamina.CanDrainStamina(airSlashInitialStaminaCost) == false)
         {
+            stamina.FlashStaminaBar();
             control.state = PlayerStates.NORMAL;
             return;
         }
+
         if (control.state == PlayerStates.NORMAL &&
             (control.PlayerGrounded || control.stepsSinceLastGrounded < 3))
         {
@@ -137,14 +142,8 @@ public class PlayerSpecialAttack : MonoBehaviour {
         }
         else if (control.state == PlayerStates.ROLL || (control.state == PlayerStates.NORMAL && control.stepsSinceLastGrounded >= 3))
         {
-            StartBaseballSamurai(PlayerStates.SAMURAI); // StartRollSlash();
+            StartBaseballSamurai(PlayerStates.SAMURAI);
         }
-        /*else if (control.state == PlayerStates.NORMAL &&
-            !control.PlayerGrounded &&
-            control.stepsSinceLastGrounded > 3)
-        {
-            StartGroundPound();
-        }*/
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -179,7 +178,6 @@ public class PlayerSpecialAttack : MonoBehaviour {
     {
         StopAllCoroutines();
         gravity.StopAfterSpecialGrav();
-        canSlash = false;
         applyStartForce = true;
         jumpQueued = attackQueued = rollQueued = specialQueued = false;
         control.state = state;
@@ -217,12 +215,6 @@ public class PlayerSpecialAttack : MonoBehaviour {
         else
         {
             desiredVelo = currentVelo * 0.8f;
-            /*
-            if (currentVelo.y < 0)
-                desiredVelo = new(currentVelo.x * 0.8f, currentVelo.y * 0.99f, currentVelo.z * 0.8f);
-            else
-                desiredVelo = currentVelo * 0.8f;
-            */
         }
         Vector3 newVelo = Vector3.MoveTowards(currentVelo, desiredVelo, 100);
         if (applyStartForce)
@@ -314,13 +306,14 @@ public class PlayerSpecialAttack : MonoBehaviour {
 
     IEnumerator BaseballSamurai(PlayerStates state)
     {
+        stamina.CanDrainStamina(chargingStaminaCost * Time.unscaledDeltaTime);
         // CHARGE
         if (control.PlayerGrounded)
             startedGrounded = true;
         else
             startedGrounded = false;
 
-        while (buttonHeld && currentCharge < maxChargeDuration)
+        while (buttonHeld && currentCharge < maxChargeDuration && stamina.CanDrainStamina(chargingStaminaCost * Time.unscaledDeltaTime))
         {
             charging = true;
             RotateWhileCharging();
@@ -337,7 +330,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
                 Time.timeScale = Mathf.Lerp(0.65f, 0.1f, perc);
                 anim.speed = Mathf.Lerp(1.6f, 4, perc);
             }
-            LerpCameraDistance();
+            LerpCameraDistance(); /////////////////////////////////////////////////////////////////////////////////////////?????????????? <<<<<<<<<< tätä ei oo tehty viel ollenkaan
             yield return null;
         }
         // ATTACK
@@ -369,17 +362,31 @@ public class PlayerSpecialAttack : MonoBehaviour {
             yield return Helpers.GetWait(secondHitDuration);
 
         // END
-        if (specialQueued && canSlash)
+        if (specialQueued)
         {
-            if (state == PlayerStates.BASEBALL)
-                StartBaseballSamurai(PlayerStates.SAMURAI);
-            else if (state == PlayerStates.SAMURAI)
-                StartBaseballSamurai(PlayerStates.BASEBALL);
+            if (stamina.CanDrainStamina(airSlashInitialStaminaCost))
+            {
+                ContinueBasSam(state);
+                yield break;
+            }
+            else
+            {
+                stamina.FlashStaminaBar();
+                EndBaseballSamurai();
+            }
         }
         else
         {
             EndBaseballSamurai();
         }
+    }
+
+    void ContinueBasSam(PlayerStates state)
+    {
+        if (state == PlayerStates.BASEBALL)
+            StartBaseballSamurai(PlayerStates.SAMURAI);
+        else if (state == PlayerStates.SAMURAI)
+            StartBaseballSamurai(PlayerStates.BASEBALL);
     }
 
     void IgnoreNearbyEnemies(bool state)
