@@ -52,11 +52,10 @@ public class PlayerGravity : MonoBehaviour {
         if (attack.hijackControls || special.hijackControls) {
             return;
         }
-        if (control.state == PlayerStates.SAMURAI || control.state == PlayerStates.BASEBALL) {
-            if (!control.PlayerGrounded && rb.velocity.y < 0)
-            {
-                rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y * 0.8f, rb.velocity.z);
-            }
+        if (afterSpecialgravityT > 0)
+        {
+            AfterSpecialGrav();
+            return;
         }
         
         // Apex:
@@ -100,7 +99,7 @@ public class PlayerGravity : MonoBehaviour {
 
     void CapFallSpeed()
     {
-        if (rb.velocity.y < -_maxFallSpeed)
+        if (rb.velocity.y < -_maxFallSpeed && control.state != PlayerStates.BASEBALL && control.state != PlayerStates.SAMURAI)
         {
             rb.velocity = new Vector3(rb.velocity.x, -_maxFallSpeed, rb.velocity.z);
         }
@@ -162,31 +161,29 @@ public class PlayerGravity : MonoBehaviour {
                 apexT += Time.deltaTime * 3;
             }
             yield return null;
-            
-
-            /*
-            apexGravMult = perc;
-            if (!jumpPressed)
-            {
-                apexT += Time.deltaTime * 3f;
-                //apexGravMult = 0.1f;
-                
-                /*
-                perc = t / apexGravTimer;
-                perc = Mathf.Sin(perc * Mathf.PI * 0.5f);
-                apexGravMult = Mathf.Lerp(0f, 1, perc);
-                //
-            }
-            apexT += Time.deltaTime;
-            yield return null;
-            */
         }
         apexT = 1;
     }
 
-    void AfterJumpExtraGravity() {
-        
+    float afterSpecialgravityT = 0;
+    [SerializeField] private float afterSpecialGravityReturnRate = 2;
+    public void AfterBasebSamuraiGravity()
+    {
+        afterSpecialgravityT = 1;
     }
 
-
+    void AfterSpecialGrav()
+    {
+        rb.velocity = new(rb.velocity.x, rb.velocity.y * Mathf.Lerp(0.7f, 0.95f, afterSpecialgravityT), rb.velocity.z);
+        afterSpecialgravityT -= Time.deltaTime * afterSpecialGravityReturnRate;
+        if (control.PlayerGrounded)
+        {
+            afterSpecialgravityT = 0;
+        }
+        rb.velocity += Vector3.up * Physics.gravity.y * (1 - afterSpecialgravityT);
+    }
+    public void StopAfterSpecialGrav()
+    {
+        afterSpecialgravityT = 0;
+    }
 }

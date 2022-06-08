@@ -32,6 +32,7 @@ public class PlayerGrapple : MonoBehaviour {
 
     public void InitGrapple(Transform target) {
         this.target = target;
+        control.StopAfterSpecialGravity();
         control.state = PlayerStates.GRAPPLE;
         control.SetAccelerationMod(0);
         rotate.SetRotateSpdMod(0);

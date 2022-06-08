@@ -1044,12 +1044,13 @@ MonoBehaviour:
   fallGravMult: 2
   lowJumpGravMult: 4
   apexGravTimer: 0.15
-  brakeDuration: 0.4
+  brakeDuration: 0.5
   maxBrakeForce: 6
   _jumpApexThreshold: 2
   _apexBonus: 70
   _minFallSpeed: 0.15
   _maxFallSpeed: 30
+  afterSpecialGravityReturnRate: 0.3
 --- !u!114 &168555317770232275
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1088,17 +1089,17 @@ MonoBehaviour:
   currentJump: 0
   maxEarlyJumpTimeSteps: 12
   normalJump_moveSpdReduct: 0.75
-  jumpHeight: 16
+  jumpHeight: 19
   runHeightMultiplier: 0.8
   groundPoundHeightMultiplier: 1.25
   wallJumpHorizontalMult: 0.9
   wallJumpMinimumAngle: 66
   wallJumpVerticalMult: 0.6
-  upwardsWallJumpHeight: 23
+  upwardsWallJumpHeight: 25
   accelModTimeOnWalljump: 0.8
   wallJumpRotationAlignDuration: 0.05
   airJumpHorizForce: 70
-  airJumpVertiForce: 21
+  airJumpVertiForce: 25
   upwardsAirJumpHeight: 21
   airJumpRotationAlignDuration: 0.05
   accelModTimeOnAirJump: 0.05
@@ -1188,8 +1189,8 @@ MonoBehaviour:
   airAttack: {fileID: 11400000, guid: 37d24a0814227454d865b51cd2da4942, type: 2}
   rollAttack: {fileID: 11400000, guid: c7a0c1a8ea5bc7f4ab934636a74e88b8, type: 2}
   targetPosOffsetFromPlayer: 1.6
-  aimerRadius: 2.1
-  aimerDistance: 1.7
+  aimerRadius: 2.3
+  aimerDistance: 1.9
 --- !u!114 &168555317770232268
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1205,7 +1206,7 @@ MonoBehaviour:
   hijackControls: 0
   canSlash: 1
   specialCooldown: 0.2
-  baseballSamuraiChargeDuration: 2.5
+  maxChargeDuration: 2
   stepMinimumForce: 250
   stepMaximumForceMult: 5
   maxChargeRotationMult: 0.5

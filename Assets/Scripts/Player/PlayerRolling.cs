@@ -74,6 +74,7 @@ public class PlayerRolling : MonoBehaviour {
     public void InitRoll() {
         canRoll = false;
         continuousRoll = false;
+        control.StopAfterSpecialGravity();
         control.SetAccelerationMod(1);
         rotate.SetRotateSpdMod(1);
         control.state = PlayerStates.ROLL;

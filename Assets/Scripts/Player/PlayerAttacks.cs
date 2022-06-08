@@ -106,9 +106,11 @@ public class PlayerAttacks : MonoBehaviour {
             InitAttack(airAttack);
         }
     }
+    private Enemy_TongueInteraction targetScript = null;
     void InitAttack(PlayerAttackScriptable attack) {
         control.state = PlayerStates.ATTACK;
         currentAttack = attack;
+        control.StopAfterSpecialGravity();
         nextAttack = null;
         attackQueued = rollQueued = specialQueued = jumpQueued = false;
         SetAttSpdModifier();
@@ -126,9 +128,23 @@ public class PlayerAttacks : MonoBehaviour {
         }
         t = 0;
         target = null;
+        targetScript = null;
+
         //startPos = transform.position;
-        model.rotation = Quaternion.LookRotation(AimAndChooseTarget(aimerRadius, aimerDistance));
+        var lookRot = AimAndChooseTarget(aimerRadius, aimerDistance);
+        model.rotation = Quaternion.LookRotation(new(lookRot.x, 0, lookRot.z));
         if (target != null) {
+            switch (targetScript.enemySize)
+            {
+                case EnemySizes.SMALL:
+                    targetPosOffsetFromPlayer = 1.5f; break;
+                case EnemySizes.MEDIUM:
+                    targetPosOffsetFromPlayer = 2f; break;
+                case EnemySizes.LARGE:
+                    targetPosOffsetFromPlayer = 2.5f; break;
+                default:
+                    break;
+            }
             hijackControls = true;
             control.SetVelocity(Vector3.zero);
             rb.velocity = Vector3.zero;
@@ -243,13 +259,11 @@ public class PlayerAttacks : MonoBehaviour {
                 else if (specialQueued) {
                     anim.speed = 1;
                     weaponTrigger.ColliderOff();
-                    if (currentAttack.animatorStateName == "attack_rose01")
-                        special.StartBaseballSamurai(PlayerStates.SAMURAI);
-                    else if (currentAttack.animatorStateName == "attack_rose02")
-                        special.StartBaseballSamurai(PlayerStates.BASEBALL);
-                    else if (currentAttack.animatorStateName == "attack_rose03")
-                        special.StartBaseballSamurai(PlayerStates.SAMURAI);
                     hijackControls = false;
+                    if (Random.Range(0, 2) == 0)                    
+                        special.StartBaseballSamurai(PlayerStates.SAMURAI);                    
+                    else
+                        special.StartBaseballSamurai(PlayerStates.BASEBALL);
                     yield break;
                 }
                 else if (rollQueued) {
@@ -268,24 +282,6 @@ public class PlayerAttacks : MonoBehaviour {
                     nextAttack = null;
                     currentAttack = null;
                     control.state = PlayerStates.NORMAL;
-                    /*
-                    anim.speed = 1;
-                    weaponTrigger.ColliderOff();
-                    hijackControls = false;
-                    currentAttack = null;
-                    nextAttack = null;
-                    control.state = PlayerStates.NORMAL;
-                    control.SetAccelerationMod(1);
-                    rotate.SetRotateSpdMod(1);
-                    if (control.PlayerGrounded && jump.playerCanJump) {
-                        jump.InitNormalJump();
-                    }
-                    else if (control.PlayerOnSteep) {
-                        jump.WallJump();
-                    }
-                    else if (!control.PlayerGrounded && !jump.airJumpUsed) {
-                        jump.InitAirJump();
-                    }*/
                     yield break;
                 }
             }
@@ -319,7 +315,6 @@ public class PlayerAttacks : MonoBehaviour {
         Collider[] targets = Physics.OverlapSphere(endPoint, overlapSphereRadius);
         target = null;
         float targetDistToPlr = 10;
-        //if (inputDir.sqrMagnitude > control.deadzoneSquared) {
         float targetDistToLine = 10;
         foreach (var c in targets) {
             if (c.CompareTag("Enemy")) {
@@ -339,6 +334,8 @@ public class PlayerAttacks : MonoBehaviour {
             }
         }
         if (target != null) {
+            //dir = (transform.position - transform.position).normalized;
+            targetScript = target.root.GetComponent<Enemy_TongueInteraction>();
             dir = new Vector3(
                 target.position.x - transform.position.x, 
                 0, 

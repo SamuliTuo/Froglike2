@@ -96,7 +96,7 @@ public class PlayerJumping : MonoBehaviour {
             control.state == PlayerStates.LONG_JUMP) {
             return;
         }
-
+        control.StopAfterSpecialGravity();
         jumpSpeed = Mathf.Sqrt(-2f * Physics.gravity.y * jumpHeight);
         if (control.state == PlayerStates.ROLL) {
             if (playerCanJump && (control.PlayerGrounded || lateJumpTimer > 0)) {
