@@ -16,7 +16,7 @@ MonoBehaviour:
   attackDuration: 0
   animationSpeed: 1
   animationStartPerc: 0
-  nextAttack: {fileID: 11400000, guid: 37d24a0814227454d865b51cd2da4942, type: 2}
+  nextAttack: {fileID: 11400000, guid: cf6a00ce1ae782740a6db2cf94a1215d, type: 2}
   nextAttackInitPerc: 0.519
   stepForce: 15
   stepDuration: 0.35

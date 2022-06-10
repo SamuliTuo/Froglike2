@@ -11,15 +11,23 @@ public class CameraEffects : MonoBehaviour {
         cam = GetComponentInChildren<Camera>();
     }
 
+    float scale = 1;
     void Update() {
+        if (Keyboard.current.digit7Key.wasPressedThisFrame) {
+            scale -= 0.1f;
+            Time.timeScale = scale;
+        }
         if (Keyboard.current.digit8Key.wasPressedThisFrame) {
-            Time.timeScale -= 0.1f;
+            scale += 0.1f;
+            Time.timeScale = scale;
         }
         if (Keyboard.current.digit9Key.wasPressedThisFrame) {
-            Time.timeScale += 0.1f;
+            scale = 0.1f;
+            Time.timeScale = scale;
         }
         if (Keyboard.current.digit0Key.wasPressedThisFrame) {
-            Time.timeScale = 1;
+            scale = 1;
+            Time.timeScale = scale;
         }
     }
 }

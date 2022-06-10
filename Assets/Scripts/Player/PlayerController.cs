@@ -176,6 +176,10 @@ public class PlayerController : MonoBehaviour {
                 new Vector3(playerInput.x, 0f, playerInput.y) * walkSpd;
         }
     }
+    public Transform GetPlrInputSpace()
+    {
+        return playerInputSpace;
+    }
 
     void UpdateState() {
         stepsSinceLastGrounded++;
@@ -227,7 +231,7 @@ public class PlayerController : MonoBehaviour {
             return;
         }
         else if (state == PlayerStates.BASEBALL || state == PlayerStates.SAMURAI) {
-            velocity += special.BaseballSamuraiMovement(xAx, currentX, zAx, currentZ);
+            velocity = special.BaseballSamuraiMovement(xAx, currentX, zAx, currentZ);
             return;
         }
 
@@ -263,12 +267,12 @@ public class PlayerController : MonoBehaviour {
         return v - contactNormal * Vector3.Dot(v, contactNormal);
     }
 
-    void OnCollisionEnter(Collision col) {
-        EvaluateCollision(col);
+    void OnCollisionEnter(Collision c) {
+        EvaluateCollision(c);
     }
 
-    void OnCollisionStay(Collision col) {
-        EvaluateCollision(col);
+    void OnCollisionStay(Collision c) {
+        EvaluateCollision(c);
     }
 
     void EvaluateCollision(Collision col) {
@@ -293,7 +297,6 @@ public class PlayerController : MonoBehaviour {
                 contactNormal += normal;
                 connectedRb = col.rigidbody;
                 roll.canRoll = true;
-                special.canSlash = true;
                 jump.airJumpUsed = false;
                 jump.lateJumpTimer = jump.maxLateJumpTimeSteps;
             }
@@ -442,6 +445,10 @@ public class PlayerController : MonoBehaviour {
             colChanger.ChangeToStandUpColliders();
         }
         //state = PlayerStates.NORMAL;
+    }
+    public void StopAfterSpecialGravity()
+    {
+        gravity.StopAfterSpecialGrav();
     }
 
     void OnXAxis(InputValue value) {

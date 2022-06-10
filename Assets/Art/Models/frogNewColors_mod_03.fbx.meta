@@ -225,6 +225,9 @@ ModelImporter:
   - first:
       74: 1229332582328745540
     second: Armature|XX_unused_torchHold
+  - first:
+      74: -3389150629327563106
+    second: attack_rose04
   externalObjects: {}
   materials:
     materialImportMode: 2

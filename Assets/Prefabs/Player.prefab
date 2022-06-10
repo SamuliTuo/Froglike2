@@ -894,6 +894,7 @@ GameObject:
   - component: {fileID: 168555317770232272}
   - component: {fileID: 168555317770232274}
   - component: {fileID: 168555317770232266}
+  - component: {fileID: 6899321237300122559}
   - component: {fileID: 168555317770232269}
   - component: {fileID: 168555317770232265}
   - component: {fileID: 168555317770232264}
@@ -1044,12 +1045,13 @@ MonoBehaviour:
   fallGravMult: 2
   lowJumpGravMult: 4
   apexGravTimer: 0.15
-  brakeDuration: 0.4
+  brakeDuration: 0.5
   maxBrakeForce: 6
   _jumpApexThreshold: 2
   _apexBonus: 70
   _minFallSpeed: 0.15
   _maxFallSpeed: 30
+  afterSpecialGravityReturnRate: 0.3
 --- !u!114 &168555317770232275
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1064,7 +1066,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   running: 0
   runMultiplier: 1
-  maxRunSpeedMult: 0.45
+  maxRunSpeedMult: 0.6
   runSpeedAccelRate: 5
   runSpeedDecelRate: 15
   toggleRunOffTimerMax: 0.1
@@ -1088,17 +1090,17 @@ MonoBehaviour:
   currentJump: 0
   maxEarlyJumpTimeSteps: 12
   normalJump_moveSpdReduct: 0.75
-  jumpHeight: 16
-  runHeightMultiplier: 0.8
+  jumpHeight: 19
+  runHeightMultiplier: 0.65
   groundPoundHeightMultiplier: 1.25
   wallJumpHorizontalMult: 0.9
   wallJumpMinimumAngle: 66
   wallJumpVerticalMult: 0.6
-  upwardsWallJumpHeight: 23
+  upwardsWallJumpHeight: 25
   accelModTimeOnWalljump: 0.8
   wallJumpRotationAlignDuration: 0.05
   airJumpHorizForce: 70
-  airJumpVertiForce: 21
+  airJumpVertiForce: 25
   upwardsAirJumpHeight: 21
   airJumpRotationAlignDuration: 0.05
   accelModTimeOnAirJump: 0.05
@@ -1188,8 +1190,8 @@ MonoBehaviour:
   airAttack: {fileID: 11400000, guid: 37d24a0814227454d865b51cd2da4942, type: 2}
   rollAttack: {fileID: 11400000, guid: c7a0c1a8ea5bc7f4ab934636a74e88b8, type: 2}
   targetPosOffsetFromPlayer: 1.6
-  aimerRadius: 2.1
-  aimerDistance: 1.7
+  aimerRadius: 2.3
+  aimerDistance: 1.9
 --- !u!114 &168555317770232268
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1203,9 +1205,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hijackControls: 0
-  canSlash: 1
   specialCooldown: 0.2
-  baseballSamuraiChargeDuration: 2.5
+  maxChargeDuration: 2.43
+  chargingStaminaCost: 0.33
+  airSlashInitialStaminaCost: 0.2
   stepMinimumForce: 250
   stepMaximumForceMult: 5
   maxChargeRotationMult: 0.5
@@ -1319,6 +1322,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hpBar: {fileID: 0}
   maxHP: 999
+--- !u!114 &6899321237300122559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 168555317770232102}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0badfb38c9d596643a21b366bdbe4fb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  groundRegenRate: 2.5
+  airRegenRate: 0.01
+  stepsUntilRegen: 35
+  stepsUntilDecay: 6
+  stepsUntilDisappearWhenFull: 9
+  StaminaFlashDuration: 0.2
 --- !u!114 &168555317770232269
 MonoBehaviour:
   m_ObjectHideFlags: 0
