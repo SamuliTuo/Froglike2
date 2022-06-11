@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: playerAttack_rose02
   m_EditorClassIdentifier: 
   animatorStateName: attack_rose02
+  manaRegenedPerHit: 0.05
   attackDuration: 0
-  animationSpeed: 1
+  animationSpeed: 1.5
   animationStartPerc: 0
   nextAttack: {fileID: 11400000, guid: 9829d04ba3b26994dbca241fb55abcaa, type: 2}
   nextAttackInitPerc: 0.38
@@ -27,11 +28,11 @@ MonoBehaviour:
   rotReturnDuration: 0.25
   weaponColActivatePerc: 0.1
   weaponColDeactivatePerc: 0.45
-  width: 1.3
+  width: 0.9
   length: 1.3
   growSpeed: 3
-  flySpeed: 4.5
+  flySpeed: 2.5
   lifeTime: 0.15
-  spawnDelay: 0.18
+  spawnDelay: 0.16
   spawnOffset: {x: 0, y: 1.1, z: 1.4}
   rotation: {x: 10, y: 0, z: -8}

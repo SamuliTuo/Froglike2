@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f925c946bba8044d91e55331152c0e7, type: 3}
+  m_Name: fireBall_mega
+  m_EditorClassIdentifier: 
+  usesGravity: 1
+  projectileLifeTime: 3
+  destroyedOnImpact: 1
+  collisionsBeforeDestroyed: 1
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 257
+  projectileScaleMin: {x: 1.5, y: 1.5, z: 1.5}
+  projectileScaleMax: {x: 1.6, y: 1.6, z: 1.6}
+  manaCostInitial: 0
+  manaCostOngoing: 0.003
+  chargeTime: 0.66
+  shootForceMinMax: {x: 13, y: 15}
+  moveSpeedMultiplierMinMax: {x: 0.4, y: 0.3}
+  rotateSpeedMultiplierMinMax: {x: 0.8, y: 0.7}
+  explodesOnImpact: 1
+  explodeOnLifetimeEnd: 1
+  explosionRadius: 5
+  damageMinMax: {x: 0.5, y: 1}
+  poiseDmgMinMax: {x: 9, y: 11}
+  kbForceMinMax: {x: 3, y: 5}
+  leaveAOEOnImpact: 1
+  leaveAOEOnLifetimeEnd: 1
+  aoeRadius: 11
+  aoeLifetime: 3
+  tickInterval: 0.5
+  tickDmg: 0.1
+  poiseDmgPerTick: 0.3
+  kbForcePerTick: 0.5

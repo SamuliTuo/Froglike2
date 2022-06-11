@@ -895,6 +895,8 @@ GameObject:
   - component: {fileID: 168555317770232274}
   - component: {fileID: 168555317770232266}
   - component: {fileID: 6899321237300122559}
+  - component: {fileID: 8051860730209937453}
+  - component: {fileID: 1102711262}
   - component: {fileID: 168555317770232269}
   - component: {fileID: 168555317770232265}
   - component: {fileID: 168555317770232264}
@@ -1206,6 +1208,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hijackControls: 0
   specialCooldown: 0.2
+  manaRegenedPerHit: 0.03
   maxChargeDuration: 2.43
   chargingStaminaCost: 0.33
   airSlashInitialStaminaCost: 0.2
@@ -1334,12 +1337,48 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0badfb38c9d596643a21b366bdbe4fb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  groundRegenRate: 2.5
+  groundRegenRate: 1.5
   airRegenRate: 0.01
-  stepsUntilRegen: 35
+  stepsUntilRegen: 25
   stepsUntilDecay: 6
-  stepsUntilDisappearWhenFull: 9
+  stepsUntilDisappearWhenFull: 99
   StaminaFlashDuration: 0.2
+--- !u!114 &8051860730209937453
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 168555317770232102}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1eeddb917153024f85f0cf6c901eb45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  drainStartPerc: 0.3
+  drainRate: 0.4
+  stepsUntilFadeWhenFull: 3
+  manaFlashDuration: 0.2
+  drainLerpRate: 1
+--- !u!114 &1102711262
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 168555317770232102}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fd9f07483513ad478c0679136b0eb20, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxChargeTime: 1
+  minChargeTime: 0.3
+  maxTurnRate: 3
+  minForceMult: 0.3
+  maxForce: 50
+  manaCostCharging: 0.05
+  manaCostInitial: 0.3
 --- !u!114 &168555317770232269
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -69,6 +69,15 @@
                     "initialStateCheck": true
                 },
                 {
+                    "name": "Mouth",
+                    "type": "Value",
+                    "id": "f070ebe8-fd3b-428d-803a-e6597a82bb95",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "Press",
+                    "initialStateCheck": true
+                },
+                {
                     "name": "Crouch",
                     "type": "Button",
                     "id": "871a969d-11d0-4f68-95ec-360fa5d5b26f",
@@ -508,6 +517,28 @@
                     "processors": "",
                     "groups": "mouseAndKeyboard",
                     "action": "Crouch",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "ce3ffcf0-a77a-4d45-a562-e6175a0509ed",
+                    "path": "<Gamepad>/leftTrigger",
+                    "interactions": "",
+                    "processors": "Normalize(max=1)",
+                    "groups": "gamepad",
+                    "action": "Mouth",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "c4a33e4f-8e94-462b-85b7-ea58a4c18c82",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "mouseAndKeyboard",
+                    "action": "Mouth",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -153,8 +153,8 @@ GameObject:
   - component: {fileID: 2980858551262128381}
   - component: {fileID: 2980858551262128380}
   - component: {fileID: 2980858551262128383}
-  - component: {fileID: 2980858551262128382}
   - component: {fileID: 2980858551262128377}
+  - component: {fileID: 7869773048176465122}
   - component: {fileID: 2980858551262128376}
   - component: {fileID: 2980858551262128379}
   - component: {fileID: 2980858551262128378}
@@ -297,19 +297,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   agent: {fileID: 2980858551262128371}
---- !u!114 &2980858551262128382
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2980858551262128353}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7215a97c54dcffa44b1ec34354de1457, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  agent: {fileID: 2980858551262128371}
 --- !u!114 &2980858551262128377
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -324,6 +311,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   agent: {fileID: 2980858551262128371}
   stompCooldown: 10
+--- !u!114 &7869773048176465122
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2980858551262128353}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38b4c6146f75b0f46a058c8a3f75b775, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  agent: {fileID: 2980858551262128371}
 --- !u!114 &2980858551262128376
 MonoBehaviour:
   m_ObjectHideFlags: 0
