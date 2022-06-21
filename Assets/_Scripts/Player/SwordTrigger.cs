@@ -28,10 +28,11 @@ public class SwordTrigger : MonoBehaviour {
     }
 
     void OnTriggerEnter(Collider other) {
-        if (other.CompareTag("Enemy") && currentAttack != null) {
-            if (currentAttack.ObjectHit(other.transform.root.gameObject)) {
-                hitEffects.EnemyHit(other);
-            }
+        if (other.isTrigger == false && 
+            other.CompareTag("Enemy") && 
+            currentAttack != null) 
+        {
+            currentAttack.AddToObjectsHit(other.transform.root.gameObject);
         }
     }
 }

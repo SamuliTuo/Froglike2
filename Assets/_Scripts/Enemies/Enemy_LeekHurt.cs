@@ -23,11 +23,18 @@ public class Enemy_LeekHurt : MonoBehaviour {
         agent = GetComponent<NavMeshAgent>();
     }
 
-    public void TakeDmg(GameObject player, List<UpgradeType> modifiers = null, float damage = 1, float poiseDmg = 1, float kbForce = 1) {
+    public void TakeDmg(
+        GameObject player, List<UpgradeType> modifiers = null, 
+        float damage = 1, float poiseDmg = 1, float kbForce = 1) 
+    {
         Variables.Object(gameObject).Set("Target", player);
         TakeDmg(player.transform.position, modifiers, damage, poiseDmg, kbForce);
     }
-    public void TakeDmg(Vector3 kbSourcePos, List<UpgradeType> modifiers = null, float damage = 1, float poiseDmg = 1, float kbForce = 1) {
+
+    public void TakeDmg(
+        Vector3 kbSourcePos, List<UpgradeType> modifiers = null, 
+        float damage = 1, float poiseDmg = 1, float kbForce = 1) 
+    {
         this.damage = damage;
         this.poiseDmg = poiseDmg;
         this.kbForce = kbForce;

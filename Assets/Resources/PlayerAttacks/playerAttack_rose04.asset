@@ -12,13 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3616dc95a153b6141bf75eb6af689121, type: 3}
   m_Name: playerAttack_rose04
   m_EditorClassIdentifier: 
+  attackType: 1
+  damage: 1.8
+  useDamageDelay: 0
+  damageDelay: 0
+  damageInstanceIntervalMinMax: {x: 0, y: 0}
+  poiseDmg: 2.5
+  kbForce: 2.5
   animatorStateName: attack_rose04
-  manaRegenedPerHit: 0.25
+  manaRegenedPerHit: 0.1
+  staminaRegenedPerHit: 1
   attackDuration: 0
   animationSpeed: 1
   animationStartPerc: 0
   nextAttack: {fileID: 11400000, guid: 37d24a0814227454d865b51cd2da4942, type: 2}
-  nextAttackInitPerc: 0.755
+  nextAttackInitPerc: 0.934
   stepForce: 15
   stepDuration: 0.35
   attackHomingEndPerc: 0.3
@@ -30,9 +38,9 @@ MonoBehaviour:
   weaponColDeactivatePerc: 0.563
   width: 1.8
   length: 2.5
-  growSpeed: 5
-  flySpeed: 2.1
-  lifeTime: 0.2
+  growSpeed: 6
+  flySpeed: 2.5
+  lifeTime: 0.13
   spawnDelay: 0.15
-  spawnOffset: {x: 0.1, y: 1, z: 0.9}
-  rotation: {x: -10, y: 0, z: 0}
+  spawnOffset: {x: 0, y: 1, z: 0.6}
+  rotation: {x: 10, y: -6, z: 13}

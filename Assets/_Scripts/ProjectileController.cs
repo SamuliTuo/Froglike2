@@ -11,6 +11,8 @@ public class ProjectileController : MonoBehaviour
     private Rigidbody rb;
     private float t;
     private int collisionsLeft;
+    private float brakePerc;
+    bool brakesOn = false;
 
     public void InitProjectile(ProjectileScriptable projectile, float charge, Vector3 velocity)
     {
@@ -18,10 +20,26 @@ public class ProjectileController : MonoBehaviour
         rb.useGravity = projectile.usesGravity;
         rb.AddForce(velocity, ForceMode.Impulse);
         this.projectile = projectile;
+        this.brakePerc = projectile.brakesPerc;
         this.charge = charge;
         collisionsLeft = projectile.collisionsBeforeDestroyed;
         objectsHit.Clear();
+        brakesOn = true;
         StartCoroutine(LifeTime());
+    }
+
+
+    private void FixedUpdate()
+    {
+        if (t < 0.2f)
+            return;
+
+        if (brakesOn && rb.velocity.sqrMagnitude > projectile.brakeTargetVeloSqrd)
+            rb.velocity *= brakePerc;
+        else if (brakesOn == false)
+            rb.velocity += Vector3.up * Physics.gravity.y * projectile.gravityMultiplier * Time.deltaTime;
+        else
+            brakesOn = false;
     }
 
     void OnTriggerEnter(Collider other)

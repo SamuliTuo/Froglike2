@@ -43,10 +43,10 @@ public class PlayerCrawl : MonoBehaviour {
         colliders.ChangeToSmallCollider();
         control.moveSpeedMod = 0.5f;
         control.SetAccelerationMod(0.5f);
-
     }
 
     public void InitCrawlOnStuckUnder() {
+        colliders.ChangeToSmallCollider();
         control.state = PlayerStates.CRAWL;
         StartCoroutine(GetUp());
     }

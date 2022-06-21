@@ -5,8 +5,8 @@ using UnityEngine.UI;
 
 public class PlayerStamina : MonoBehaviour
 {
-    [SerializeField] private float groundRegenRate = 1;
-    [SerializeField] private float airRegenRate = 1;
+    [SerializeField] private float regenRate_combat = 0.1f;
+    [SerializeField] private float regenRate_safe = 1;
     [SerializeField] private int stepsUntilRegen = 40;
     [SerializeField] private int stepsUntilDecay = 20;
     [SerializeField] private int stepsUntilDisappearWhenFull = 3;
@@ -74,9 +74,29 @@ public class PlayerStamina : MonoBehaviour
         staminaBar.color = Color.green;
     }
 
-    public bool CanDrainStamina(float amount)
+    public void GainStamina(float perc)
     {
-        if (currentStamina < amount * 0.5f) 
+        currentStamina += perc;
+        currentStamina = Mathf.Min(1, currentStamina);
+        RefreshStaminaBar();
+        if (currentDrain < currentStamina)
+        {
+            currentDrain = currentStamina;
+            RefreshDrainBar();
+        }
+    }
+
+    public bool HasStamina(float perc)
+    {
+        if (currentStamina < perc * 0.5f)
+        {
+            return false;
+        }
+        return true;
+    }
+    public bool TryDrainStamina(float perc)
+    {
+        if (currentStamina < perc * 0.5f) 
         {
             return false;
         }
@@ -90,7 +110,7 @@ public class PlayerStamina : MonoBehaviour
             RefreshDrainBar();
         }
         
-        currentStamina -= amount;
+        currentStamina -= perc;
         RefreshStaminaBar();
         return true;
     }
@@ -109,7 +129,15 @@ public class PlayerStamina : MonoBehaviour
         }
         if (regenStarted)
         {
-            currentStamina += Time.deltaTime * groundRegenRate;
+            if (Singleton.instance.GameState.state == State.SAFE)
+            {
+                currentStamina += Time.deltaTime * regenRate_safe;
+            }
+            else if (Singleton.instance.GameState.state == State.COMBAT)
+            {
+                currentStamina += Time.deltaTime * regenRate_combat;
+            }
+
         }
 
         if (currentStamina >= 1)

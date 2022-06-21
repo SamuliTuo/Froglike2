@@ -56,6 +56,7 @@ public class PlayerController : MonoBehaviour {
     private PlayerRotate rotate;
     private PlayerAnimations animate;
     private PlayerGravity gravity;
+    private PlayerInputQueue queue;
     private PlayerCarrying carry;
     private PlayerJumping jump;
     private PlayerLongJump longJump;
@@ -83,6 +84,19 @@ public class PlayerController : MonoBehaviour {
     private float groundDot, minGroundDotProd, minSlipperyDotProd, minMediumSlipDotProd, minStairsDotProd;
     private float accelerationMod = 1;
 
+    [HideInInspector] public QueuedAction queuedAction = QueuedAction.NULL;
+    public void InitQueuedAction() { queue.InitQueuedAction(); }
+    public void ResetQueuedAction() { queuedAction = QueuedAction.NULL; }
+    public void SetQueuedAction(QueuedAction action) { queuedAction = action; }
+    public bool IsQueuedAction(QueuedAction action)
+    {
+        if (queuedAction == action)
+        {
+            return true;
+        }
+        return false;
+    }
+    
 
     void Start() {
         Singleton.instance.SetPlayerScripts();
@@ -91,6 +105,7 @@ public class PlayerController : MonoBehaviour {
         rotate = GetComponentInChildren<PlayerRotate>();
         animate = GetComponentInChildren<PlayerAnimations>();
         gravity = GetComponent<PlayerGravity>();
+        queue = GetComponent<PlayerInputQueue>();
         carry = GetComponent<PlayerCarrying>();
         jump = GetComponent<PlayerJumping>();
         longJump = GetComponent<PlayerLongJump>();

@@ -42,6 +42,13 @@ public class PlayerGravity : MonoBehaviour {
         jumpPressed = value.isPressed;
     }
 
+    public void StopJumpCoroutines()
+    {
+        StopAllCoroutines();
+        StopAfterSpecialGrav();
+        afterJumpExtraGrav = 0;
+    }
+
     public float _jumpApexThreshold = 1;
     public float _apexBonus = 1;
     public float _minFallSpeed = 1;
@@ -120,7 +127,7 @@ public class PlayerGravity : MonoBehaviour {
         yield return new WaitForFixedUpdate();
         while (t < brakeDuration)
         {
-            if (rb.velocity.y < -0.25f)
+            if (rb.velocity.y < 0.25f)
             {
                 t = brakeDuration;
             }
@@ -128,6 +135,10 @@ public class PlayerGravity : MonoBehaviour {
             perc = Mathf.Sin(perc * Mathf.PI * 0.5f);
             afterJumpExtraGrav = Mathf.Lerp(0, maxBrakeForce, perc);
             t += Time.deltaTime;
+            yield return null;
+        } 
+        while (rb.velocity.y > 0.25f)
+        {
             yield return null;
         }
         afterJumpExtraGrav = 0;

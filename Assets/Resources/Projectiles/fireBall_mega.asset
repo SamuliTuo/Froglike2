@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: fireBall_mega
   m_EditorClassIdentifier: 
   usesGravity: 1
+  gravityMultiplier: 2
   projectileLifeTime: 3
   destroyedOnImpact: 1
   collisionsBeforeDestroyed: 1
@@ -22,11 +23,19 @@ MonoBehaviour:
   projectileScaleMin: {x: 1.5, y: 1.5, z: 1.5}
   projectileScaleMax: {x: 1.6, y: 1.6, z: 1.6}
   manaCostInitial: 0
-  manaCostOngoing: 0.003
-  chargeTime: 0.66
-  shootForceMinMax: {x: 13, y: 15}
-  moveSpeedMultiplierMinMax: {x: 0.4, y: 0.3}
+  manaCostOngoing: 0.1
+  chargeTimeMin: 0.15
+  chargeTimeMax: 0.4
+  shootForceUpMultiplier: 0.1
+  shootForceForwardMultiplier: 1
+  shootForceMinMax: {x: 42, y: 48}
+  brakesPerc: 0.88
+  brakeTargetVeloSqrd: 11
+  moveSpeedMultiplierMinMax: {x: 0.2, y: 0.7}
   rotateSpeedMultiplierMinMax: {x: 0.8, y: 0.7}
+  accelModReturnTime: 0.15
+  rotateModReturnTime: 0.3
+  timeScaleMinMax: {x: 0.3, y: 0.8}
   explodesOnImpact: 1
   explodeOnLifetimeEnd: 1
   explosionRadius: 5
@@ -36,7 +45,7 @@ MonoBehaviour:
   leaveAOEOnImpact: 1
   leaveAOEOnLifetimeEnd: 1
   aoeRadius: 11
-  aoeLifetime: 3
+  aoeLifetime: 0.3
   tickInterval: 0.5
   tickDmg: 0.1
   poiseDmgPerTick: 0.3

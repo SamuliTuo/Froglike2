@@ -47,21 +47,31 @@ public class TongueController : MonoBehaviour {
     }
 
     void OnTongue() {
-        if (canTongue && target != null && control.state == PlayerStates.NORMAL) {
-            if (target.CompareTag("Enemy")) {
+        InitTonguePull();
+    }
+
+    public void InitTonguePull()
+    {
+        if (canTongue && target != null && control.state == PlayerStates.NORMAL)
+        {
+            if (target.CompareTag("Enemy"))
+            {
                 enemyScript = target.root.GetComponent<Enemy_TongueInteraction>();
-                if (enemyScript.TongueInteract(transform)) {
+                if (enemyScript.TongueInteract(transform))
+                {
                     lockedTarget = enemyScript.tongueTargetTransform;
                     this.tonguePullSpeed = enemyScript.tonguePullSpeed;
                     StartPull();
                 }
                 else enemyScript = null;
             }
-            else if (target.CompareTag("Grapple_stop") || target.CompareTag("Grapple_swing")) {
+            else if (target.CompareTag("Grapple_stop") || target.CompareTag("Grapple_swing"))
+            {
                 StartCoroutine(TongueCooldown());
                 grapple.InitGrapple(target);
             }
-            else if (target.CompareTag("Carryable")) {
+            else if (target.CompareTag("Carryable"))
+            {
                 lockedTarget = target;
                 tonguePullSpeed = carryablePullSpeed;
                 targetCol = target.GetComponent<Collider>();

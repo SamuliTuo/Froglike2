@@ -1,5 +1,140 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &957027460
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 957027461}
+  - component: {fileID: 957027463}
+  - component: {fileID: 957027462}
+  - component: {fileID: 957027464}
+  - component: {fileID: 957027465}
+  m_Layer: 3
+  m_Name: Collider_specialAttack
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &957027461
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957027460}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.1111114, z: 0}
+  m_LocalScale: {x: 1.1111112, y: 1.1111112, z: 1.1111112}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 168555318608291958}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &957027463
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957027460}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 5.26, y: 0.68967056, z: 4.76}
+  m_Center: {x: 0, y: 0, z: 0.38407242}
+--- !u!65 &957027462
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957027460}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1.0838726, y: 2.71, z: 3.72}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &957027464
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957027460}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7c9782a5835e064985cffabf970c740, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  triggerEnabled: 0
+--- !u!54 &957027465
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957027460}
+  serializedVersion: 2
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!1 &964755081
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 964755082}
+  - component: {fileID: 964755083}
+  m_Layer: 3
+  m_Name: ElementSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &964755082
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964755081}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 168555317770232283}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &964755083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964755081}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a6c717d5ce665642aef66a66fe743a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentElement: 0
 --- !u!1 &168555317261819873
 GameObject:
   m_ObjectHideFlags: 0
@@ -880,6 +1015,7 @@ GameObject:
   - component: {fileID: 168555317770232281}
   - component: {fileID: 168555317770232280}
   - component: {fileID: 168555317770232282}
+  - component: {fileID: 8904945434487670720}
   - component: {fileID: 168555317770232285}
   - component: {fileID: 168555317770232287}
   - component: {fileID: 168555317770232275}
@@ -925,6 +1061,7 @@ Transform:
   - {fileID: 168555317698333992}
   - {fileID: 168555318170656829}
   - {fileID: 168555318929589830}
+  - {fileID: 964755082}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -988,6 +1125,18 @@ MonoBehaviour:
   m_DefaultActionMap: normal
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
+--- !u!114 &8904945434487670720
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 168555317770232102}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1fdd5477c3a96d439b0c6fa80da1b8f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &168555317770232285
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1000,8 +1149,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8fdb0dd82e49425459a31f2d9a6b86eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  walkSpd: 8
-  runSpd: 11
+  walkSpd: 10
+  runSpd: 13
   deadzone: 0.1
   deadzoneSquared: 0
   stepsSinceLastGrounded: 0
@@ -1030,6 +1179,7 @@ MonoBehaviour:
   stairsMask:
     serializedVersion: 2
     m_Bits: 128
+  queuedAction: 0
 --- !u!114 &168555317770232287
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1047,8 +1197,8 @@ MonoBehaviour:
   fallGravMult: 2
   lowJumpGravMult: 4
   apexGravTimer: 0.15
-  brakeDuration: 0.5
-  maxBrakeForce: 6
+  brakeDuration: 0.1
+  maxBrakeForce: 9
   _jumpApexThreshold: 2
   _apexBonus: 70
   _minFallSpeed: 0.15
@@ -1089,20 +1239,20 @@ MonoBehaviour:
   playerCanJump: 1
   airJumpUsed: 0
   lateJumpTimer: 9
-  currentJump: 0
+  currentJump: 1
   maxEarlyJumpTimeSteps: 12
   normalJump_moveSpdReduct: 0.75
-  jumpHeight: 19
+  jumpHeight: 49
   runHeightMultiplier: 0.65
   groundPoundHeightMultiplier: 1.25
-  wallJumpHorizontalMult: 0.9
+  wallJumpHorizontalMult: 21
   wallJumpMinimumAngle: 66
-  wallJumpVerticalMult: 0.6
-  upwardsWallJumpHeight: 25
+  wallJumpVerticalMult: 38
+  upwardsWallJumpHeight: 43
   accelModTimeOnWalljump: 0.8
   wallJumpRotationAlignDuration: 0.05
   airJumpHorizForce: 70
-  airJumpVertiForce: 25
+  airJumpVertiForce: 38
   upwardsAirJumpHeight: 21
   airJumpRotationAlignDuration: 0.05
   accelModTimeOnAirJump: 0.05
@@ -1189,8 +1339,10 @@ MonoBehaviour:
   target: {fileID: 0}
   attackEffects: {fileID: 168555318443953069}
   groundAttack: {fileID: 11400000, guid: 37d24a0814227454d865b51cd2da4942, type: 2}
-  airAttack: {fileID: 11400000, guid: 37d24a0814227454d865b51cd2da4942, type: 2}
+  airAttack: {fileID: 11400000, guid: 580b7c7f611a8634694644138ca01d4f, type: 2}
   rollAttack: {fileID: 11400000, guid: c7a0c1a8ea5bc7f4ab934636a74e88b8, type: 2}
+  airAttackStepForceVertical: 30
+  airAttackStopForceHorizontal: 10
   targetPosOffsetFromPlayer: 1.6
   aimerRadius: 2.3
   aimerDistance: 1.9
@@ -1206,24 +1358,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8bffca5434070804396d6353dcd65b91, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  initialStaminaCost: 0.31
   hijackControls: 0
-  specialCooldown: 0.2
-  manaRegenedPerHit: 0.03
-  maxChargeDuration: 2.43
-  chargingStaminaCost: 0.55
-  airSlashInitialStaminaCost: 0.28
-  stepMinimumForce: 250
-  stepMaximumForceMult: 5
-  maxChargeRotationMult: 0.5
-  firstHitboxActivateTime: 0.1
-  firstHitHitboxLifetime: 0.22
-  firstHitDuration: 0.458
-  secondHitboxActivateTime: 0.3
-  secondHitHitboxLifetime: 0.2
-  secondHitDuration: 0.4
-  rollSlashDuration: 0.33
-  rollSlashMoveSpeed: 40
   groundPoundInitialStopDuration: 0.4
+  groundPoundSpeed: 50
+  timeInvulnerableMinMax: {x: 0.25, y: 0.33}
+  maxChargeDuration: 1.3
+  chargingStaminaCost: 0.7
+  timeBeforeCharge: 0.2
+  timeScalePercMinMax: {x: 0.15, y: 0.75}
+  stepForceMinMax: {x: 450, y: 1250}
+  maxChargeRotationMult: 0.5
+  hitDurationMinMax: {x: 0.35, y: 0.66}
+  firstHitHitboxLifetime: 0.5
+  secondHitHitboxLifetime: 0.5
+  damageMinMax: {x: 1.2, y: 1.5}
+  poiseDmgMinMax: {x: 1.3, y: 5}
+  kbForceMinMax: {x: 0, y: 5}
+  critMultiplier: 2
+  damageDelayMinMax: {x: 0.05, y: 0.26}
+  damageInstanceInterval: {x: 0.005, y: 0.02}
+  offsetFromPlayer: {x: 0, y: 0.75, z: 1.2}
+  slashRotation: {x: 0, y: 0, z: 95}
+  widthMinMax: {x: 1.6, y: 2.3}
+  heightMinMax: {x: 1.7, y: 3.4}
+  growSpeedMinMax: {x: 4.5, y: 21}
+  flySpeedMinMax: {x: 2, y: 25}
+  lifeTimeMinMax: {x: 0.13, y: 0.13}
+  spawnDelayMinMax: {x: 0.04, y: 0.01}
+  manaRegenPerHitMinMax: {x: 0.01, y: 0.05}
+  staminaRegenPerHitMinMax: {x: 0.02, y: 0.05}
 --- !u!114 &168555317770232279
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1337,9 +1501,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0badfb38c9d596643a21b366bdbe4fb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  groundRegenRate: 0.8
-  airRegenRate: 0.01
-  stepsUntilRegen: 20
+  regenRate_combat: 0.08
+  regenRate_safe: 1.5
+  stepsUntilRegen: 30
   stepsUntilDecay: 6
   stepsUntilDisappearWhenFull: 99
   StaminaFlashDuration: 0.2
@@ -1372,10 +1536,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5fd9f07483513ad478c0679136b0eb20, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  offsetUp: 1.1
-  offsetForward: 0.7
+  offsetUp: 0.8
+  offsetForward: 0.9
   slot1_phase1: {fileID: 11400000, guid: 4121c2b0d91abad40a44bc67800a07a4, type: 2}
   slot1_phase2: {fileID: 11400000, guid: fb8b2c25e3bcdda43a0f87672fbbf5ad, type: 2}
+  afterShootingWaitTime: 0.33
 --- !u!114 &168555317770232269
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1393,6 +1558,7 @@ MonoBehaviour:
   kbForceHoriz: 6
   moveReduction: 1
   rotateReduction: 1
+  invulnerable: 0
 --- !u!114 &168555317770232265
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1424,7 +1590,7 @@ MonoBehaviour:
   tongueWidth: 0.2
   lerpSpeedOut: 7
   carryablePullSpeed: 3
-  tongueCooldown: 2
+  tongueCooldown: 0.3
 --- !u!114 &168555317770232267
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2741,8 +2907,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a8fa3b176593b044b460665e36d0580, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  slot1: 2
-  slot2: 2
+  slot1: 0
+  slot2: 0
   slot3: 0
   activeUpgrades: 
   slot1_image: {fileID: 0}
@@ -3194,6 +3360,7 @@ Transform:
   - {fileID: 168555318161824006}
   - {fileID: 168555318262754536}
   - {fileID: 168555318724755316}
+  - {fileID: 957027461}
   m_Father: {fileID: 168555317770232283}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

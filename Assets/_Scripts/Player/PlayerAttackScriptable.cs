@@ -3,10 +3,19 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Scriptable Objects/PlayerAttack")]
 public class PlayerAttackScriptable : ScriptableObject {
 
+    public NumberType attackType = NumberType.normal;
+    public float damage = 1;
+    public bool useDamageDelay = false;
+    public float damageDelay = 0;
+    public Vector2 damageInstanceIntervalMinMax = Vector2.zero;
+    public float poiseDmg = 1;
+    public float kbForce = 1;
+
     [Tooltip("Name of the animator-state that has the correct attack animation")]
     public string animatorStateName = "";
 
     public float manaRegenedPerHit = 0.03f;
+    public float staminaRegenedPerHit = 0.1f;
 
     [Tooltip("Leave 0 if using animation duration")]
     public float attackDuration = 0;

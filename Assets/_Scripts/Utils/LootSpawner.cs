@@ -41,7 +41,7 @@ public class LootSpawner : MonoBehaviour {
         }
     }
 
-    public void ResetPools() {
+    public void ClearPools() {
         gemPool_purple.Clear();
         gemPool_red.Clear();
     }

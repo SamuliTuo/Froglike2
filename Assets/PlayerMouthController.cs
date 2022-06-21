@@ -11,6 +11,7 @@ public class PlayerMouthController : MonoBehaviour
     [SerializeField] private float offsetForward = 0;
     [SerializeField] private ProjectileScriptable slot1_phase1 = null;
     [SerializeField] private ProjectileScriptable slot1_phase2 = null;
+    [SerializeField] private float afterShootingWaitTime = 0.25f;
 
     private Image meter_phase01;
     private Image meter_phase02;
@@ -26,7 +27,7 @@ public class PlayerMouthController : MonoBehaviour
     private GameObject projectile;
     private Transform model;
     private bool buttonHeld = false;
-    private float t, perc;
+    private float t, perc, maxCharge;
 
 
     void Start()
@@ -47,13 +48,9 @@ public class PlayerMouthController : MonoBehaviour
     void OnMouth(InputValue value)
     {
         buttonHeld = value.isPressed;
-        if (inputSpace == null)
-        {
-            inputSpace = control.GetPlrInputSpace();
-        }
-
         if (!buttonHeld)
             return;
+
         if (control.state == PlayerStates.NORMAL && mana.TryUseMana(slot1_phase1.manaCostInitial))
         {
             InitFireball();
@@ -62,18 +59,26 @@ public class PlayerMouthController : MonoBehaviour
 
 
 
-    void InitFireball()
+    public void InitFireball()
     {
-        control.state = PlayerStates.MOUTH;
-        if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
+        if (control.state == PlayerStates.NORMAL && mana.TryUseMana(slot1_phase1.manaCostInitial) )
         {
-            model.rotation = Quaternion.LookRotation(control.GetInput(), Vector3.up);
+            control.ResetQueuedAction();
+            if (inputSpace == null)
+            {
+                inputSpace = control.GetPlrInputSpace();
+            }
+            control.state = PlayerStates.MOUTH;
+            if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
+            {
+                model.rotation = Quaternion.LookRotation(control.GetInput(), Vector3.up);
+            }
+            anim.Play("wall_frontRight", 0, 0);
+            currProjectile = slot1_phase1;
+            currentPhase = ChargePhase.PHASE_01;
+            t = perc = 0;
+            StartCoroutine(Fireball());
         }
-        anim.Play("wall_frontRight", 0, 0);
-        currProjectile = slot1_phase1;
-        currentPhase = ChargePhase.PHASE_01;
-        t = perc = 0;
-        StartCoroutine(Fireball());
     }
 
     IEnumerator Fireball()
@@ -81,11 +86,21 @@ public class PlayerMouthController : MonoBehaviour
         if (currProjectile == null)
             yield break;
 
+        maxCharge = slot1_phase1.chargeTimeMax + slot1_phase2.chargeTimeMax;
         while (currentPhase == ChargePhase.PHASE_01)
         {
-            if (buttonHeld)
+            if (buttonHeld || t < slot1_phase1.chargeTimeMin)
             {
-                UpdatePhase(currProjectile);
+                if (t < slot1_phase1.chargeTimeMax)
+                {
+                    UpdatePhase(currProjectile);
+                    t += Time.unscaledDeltaTime;
+                }
+                else
+                {
+                    currentPhase = ChargePhase.PHASE_02;
+                    currProjectile = slot1_phase2;
+                }
                 yield return null;
             }
             else
@@ -96,9 +111,18 @@ public class PlayerMouthController : MonoBehaviour
         }
         while (currentPhase == ChargePhase.PHASE_02)
         {
-            if (buttonHeld)
+            if (buttonHeld || t < slot1_phase1.chargeTimeMax + slot1_phase2.chargeTimeMin)
             {
-                UpdatePhase(currProjectile);
+                if (t < slot1_phase2.chargeTimeMax)
+                {
+                    UpdatePhase(currProjectile);
+                    t += Time.unscaledDeltaTime;
+                }
+                else
+                {
+                    EndAndShoot();
+                    yield break;
+                }
                 yield return null;
             }
             else
@@ -110,32 +134,17 @@ public class PlayerMouthController : MonoBehaviour
         EndAndShoot();
     }
 
-    void UpdatePhase(ProjectileScriptable slot) {
-        if (t < slot.chargeTime)
-        {
-            mana.TryUseMana(slot.manaCostOngoing * Time.deltaTime);
-            perc = t / slot.chargeTime;
-            perc = Mathf.Sin(perc * Mathf.PI * 0.5f);
-            FillMeter();
-            rotate.SetRotateSpdMod(
-                Mathf.Lerp(slot.rotateSpeedMultiplierMinMax.x, slot.rotateSpeedMultiplierMinMax.y, perc));
-            control.moveSpeedMod =
-                Mathf.Lerp(slot.moveSpeedMultiplierMinMax.x, slot.moveSpeedMultiplierMinMax.y, perc);
-            t += Time.deltaTime;
-        }
-        else
-        {
-            if (currentPhase == ChargePhase.PHASE_01)
-            {
-                currentPhase = ChargePhase.PHASE_02;
-                currProjectile = slot1_phase2;
-                t = perc = 0;
-            }
-            else
-            {
-                EndAndShoot();
-            }
-        }
+    void UpdatePhase(ProjectileScriptable slot)
+    {
+        mana.TryUseMana(slot.manaCostOngoing * Time.deltaTime);
+        perc = t / slot.chargeTimeMax;
+        Time.timeScale = Mathf.Lerp(slot.timeScaleMinMax.y, slot.timeScaleMinMax.x, perc);
+        perc = Mathf.Sin(perc * Mathf.PI * 0.5f);
+        FillMeter();
+        rotate.SetRotateSpdMod(
+            Mathf.Lerp(slot.rotateSpeedMultiplierMinMax.x, slot.rotateSpeedMultiplierMinMax.y, perc));
+        control.moveSpeedMod =
+            Mathf.Lerp(slot.moveSpeedMultiplierMinMax.x, slot.moveSpeedMultiplierMinMax.y, perc);
     }
 
     void FillMeter()
@@ -173,26 +182,38 @@ public class PlayerMouthController : MonoBehaviour
     void EndAndShoot()
     {
         StopAllCoroutines();
+        Time.timeScale = 1;
         Vector3 dir;
-        if (inputSpace)
+        if (inputSpace && control.GetInput().sqrMagnitude > control.deadzoneSquared)
         {
-            dir = inputSpace.forward + (inputSpace.up * 0.3f);
+            dir = (control.GetInput() * currProjectile.shootForceForwardMultiplier +
+                Vector3.up * currProjectile.shootForceUpMultiplier).normalized;
         }
         else
         {
-            dir = (model.forward + Vector3.up * 0.3f).normalized;
+            dir = (model.forward * currProjectile.shootForceForwardMultiplier + 
+                Vector3.up * currProjectile.shootForceUpMultiplier).normalized;
         }
         dir *= Mathf.Lerp(currProjectile.shootForceMinMax.x, currProjectile.shootForceMinMax.y, perc);
         var clone = Instantiate(projectile,
                 transform.position + (Vector3.up * offsetUp) + (model.forward * offsetForward),
                 Quaternion.identity);
-        clone.transform.localScale = Vector3.Lerp(currProjectile.projectileScaleMin, currProjectile.projectileScaleMax, perc);
+        clone.transform.localScale = Vector3.Lerp(
+            currProjectile.projectileScaleMin, currProjectile.projectileScaleMax, perc);
         clone.GetComponent<ProjectileController>().InitProjectile(currProjectile, perc, dir);
-        rotate.InitRotateSpdModReturn(0.2f);
+        rotate.InitRotateSpdModReturn(currProjectile.rotateModReturnTime);
         control.moveSpeedMod = 1;
-        control.InitAccelerationModReturn(0.2f, false);
-        control.state = PlayerStates.NORMAL;
+        control.InitAccelerationModReturn(currProjectile.accelModReturnTime, false);
+        StartCoroutine(EndWait());
         SetMeter(meter_phase01, bg_phase01, 0);
         SetMeter(meter_phase02, bg_phase02, 0);
+    }
+
+
+    IEnumerator EndWait()
+    {
+        yield return Helpers.GetWait(afterShootingWaitTime);
+        control.InitQueuedAction();
+        //control.state = PlayerStates.NORMAL;
     }
 }

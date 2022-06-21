@@ -83,19 +83,21 @@ public class PlayerJumping : MonoBehaviour {
             else {
                 playerJumpPressed = false;
             }
+
+            if (control.state == PlayerStates.ATTACK ||
+                control.state == PlayerStates.GROUND_POUND ||
+                control.state == PlayerStates.ROLL_SLASH ||
+                control.state == PlayerStates.BASEBALL ||
+                control.state == PlayerStates.SAMURAI ||
+                control.state == PlayerStates.LONG_JUMP)
+            {
+                return;
+            }
             ChooseJump();
         }
     }
 
-    void ChooseJump() {
-        if (control.state == PlayerStates.ATTACK ||
-            control.state == PlayerStates.GROUND_POUND ||
-            control.state == PlayerStates.ROLL_SLASH ||
-            control.state == PlayerStates.BASEBALL ||
-            control.state == PlayerStates.SAMURAI ||
-            control.state == PlayerStates.LONG_JUMP) {
-            return;
-        }
+    public void ChooseJump() {
         control.StopAfterSpecialGravity();
         jumpSpeed = Mathf.Sqrt(-2f * Physics.gravity.y * jumpHeight);
         if (control.state == PlayerStates.ROLL) {
@@ -179,7 +181,10 @@ public class PlayerJumping : MonoBehaviour {
         //Vector3 newDir = wallNormal;
         //Vector3 inputDir = control.GetInput();
         upgrades.WalljumpUpgrades(control.steepNormal, control.contactPoint);
-        Vector3 newDir = Vector3.RotateTowards(wallNormal, Vector3.up, 1.16937f, 0) * upwardsWallJumpHeight;
+        Vector3 newDir = Vector3.RotateTowards(wallNormal, Vector3.up, 1.16937f, 0);
+        newDir.y *= wallJumpVerticalMult;
+        newDir.x *= wallJumpHorizontalMult;
+        newDir.z *= wallJumpHorizontalMult;
         ActivateWallJump(newDir);
         /*
 
@@ -304,6 +309,7 @@ public class PlayerJumping : MonoBehaviour {
             StopCoroutine(gravity.brakeCoroutine);
         }
         gravity.brakeCoroutine = StartCoroutine(gravity.JumpBrakes());
+
 
         if (gravity.apexGravCoroutine != null) {
             StopCoroutine(gravity.apexGravCoroutine);

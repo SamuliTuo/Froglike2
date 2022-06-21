@@ -4,6 +4,7 @@ public class Singleton : MonoBehaviour {
 
     public static Singleton instance { get; private set; }
 
+    public GameState GameState { get; private set; }
     public Transform Player { get; private set; }
     public LevelManager LevelManager { get; private set; }
     public LootSpawner LootSpawner { get; private set; }
@@ -15,18 +16,23 @@ public class Singleton : MonoBehaviour {
     public CameraChanger CameraChanger { get; private set; }
     public VFXManager VFXManager { get; private set; }
     //public SFXManager SFXManager { get; private set; }
+
     public PlayerHurt PlayerHurt { get; private set; }
     public PlayerMana PlayerMana { get; private set; }
+    public PlayerStamina PlayerStamina { get; private set; }
     public PlayerAbilityUpgrader PlayerUpgradeHolder { get; private set; }
 
     void Awake() {
-        if (instance != null && instance != this) {
+        if (instance != null && instance != this)
+        {
             Destroy(gameObject);
             return;
         }
         instance = this;
         DontDestroyOnLoad(gameObject);
 
+        SetPlayerScripts();
+        GameState = GetComponentInChildren<GameState>();
         LevelManager = GetComponentInChildren<LevelManager>();
         LootSpawner = GetComponentInChildren<LootSpawner>();
         DamageInstanceSpawner = GetComponentInChildren<DamageInstanceSpawner>();
@@ -38,19 +44,20 @@ public class Singleton : MonoBehaviour {
         VFXManager = GetComponentInChildren<VFXManager>();
         //SFXManager = GetComponentInChildren<SFXManager>();
     }
-
     public void SetPlayerScripts() {
         Player = GameObject.Find("Player").transform;
         PlayerHurt = Player.GetComponent<PlayerHurt>();
         PlayerMana = Player.GetComponent<PlayerMana>();
+        PlayerStamina = Player.GetComponent<PlayerStamina>();
         PlayerUpgradeHolder = Player.GetComponentInChildren<PlayerAbilityUpgrader>();
     }
-
-    public void ClearPools()
+    public void RebootSingleton()
     {
-        DamageInstanceSpawner.ResetPools();
-        EnemyHPBars.ResetPools();
-        LootSpawner.ResetPools();
-        PlayerAttackSpawner.ResetPool();
+        SetPlayerScripts();
+        DamageInstanceSpawner.ClearPools();
+        EnemyHPBars.ClearPools();
+        LootSpawner.ClearPools();
+        PlayerAttackSpawner.ClearPool();
+        VFXManager.ClearPool();
     }
 }

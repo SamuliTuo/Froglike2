@@ -14,7 +14,7 @@ public class EnemyHPBars : MonoBehaviour {
         return barPool.Get();
     }
 
-    public void ResetPools() {
+    public void ClearPools() {
         barPool.Clear();
     }
 
