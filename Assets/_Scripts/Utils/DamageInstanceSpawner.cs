@@ -21,7 +21,7 @@ public class DamageInstanceSpawner : MonoBehaviour {
         clone = null;
     }
 
-    public void ResetPools() {
+    public void ClearPools() {
         dmgInstancePool.Clear();
     }
 

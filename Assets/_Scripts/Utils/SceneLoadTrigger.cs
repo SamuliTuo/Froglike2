@@ -4,11 +4,17 @@ using UnityEngine;
 
 public class SceneLoadTrigger : MonoBehaviour {
 
-    public string sceneToLoad = null;
+    public string sceneName = null;
+    public bool useIndexInstead = false;
+    public int sceneIndex = 0;
 
     void OnTriggerEnter(Collider other) {
         if (other.CompareTag("Player") && !other.isTrigger) {
-            Singleton.instance.LevelManager.LoadScene(sceneToLoad);
+            if (useIndexInstead)
+            {
+                Singleton.instance.LevelManager.LoadScene(sceneIndex);
+            }
+            Singleton.instance.LevelManager.LoadScene(sceneName);
         }
     }
 }

@@ -5,37 +5,56 @@ using UnityEngine.InputSystem;
 
 public class PlayerSpecialAttack : MonoBehaviour {
 
+    public float initialStaminaCost = 0.25f;
+
     [HideInInspector] public bool hijackControls = false;
 
-    [SerializeField] private float specialCooldown = 0.5f;
-    [Header("Baseball Samurai")]
-    [SerializeField] private float manaRegenedPerHit = 0.03f;
-    [SerializeField] private float maxChargeDuration = 2;
-    [SerializeField] private float chargingStaminaCost = 0.01f;
-    [SerializeField] private float airSlashInitialStaminaCost = 0.25f;
-    [Space]
-    [SerializeField] private float stepMinimumForce = 150f;
-    [SerializeField] private float stepMaximumForceMult = 5f;
-    [SerializeField] private float maxChargeRotationMult = 0.5f;
-    [Space]
-    [SerializeField] private float firstHitboxActivateTime = 0.1f;
-    [SerializeField] private float firstHitHitboxLifetime = 0.2f;
-    [SerializeField] private float firstHitDuration = 0.458f;
-    [SerializeField] private float secondHitboxActivateTime = 0.3f;
-    [SerializeField] private float secondHitHitboxLifetime = 0.4f;
-    [SerializeField] private float secondHitDuration = 0.4f;
-    [Header("Roll Slash")]
-    [SerializeField] private float rollSlashDuration = 1;
-    [SerializeField] private float rollSlashMoveSpeed = 10;
     [Header("Ground Pound")]
     [SerializeField] private float groundPoundInitialStopDuration = 0.4f;
-    
+    [SerializeField] private float groundPoundSpeed = 30f;
+
+    [Header("Baseball Samurai")]
+    [SerializeField] private Vector2 timeInvulnerableMinMax = Vector2.zero;
+    [Space]
+    [SerializeField] private float maxChargeDuration = 2;
+    [SerializeField] private float chargingStaminaCost = 0.01f;
+    [SerializeField] private float timeBeforeCharge = 0.1f;
+    [SerializeField] private Vector2 timeScalePercMinMax = Vector2.zero;
+    [Space]
+    [SerializeField] private Vector2 stepForceMinMax = Vector2.zero;
+    [SerializeField] private float maxChargeRotationMult = 0.5f;
+    [Space]
+    [SerializeField] private Vector2 hitDurationMinMax = Vector2.zero;
+    [SerializeField] private float firstHitHitboxLifetime = 0.2f;
+    [SerializeField] private float secondHitHitboxLifetime = 0.4f;
+
+    [Header("Slash Effect (minMax = lerp from min time charged to max)")] 
+    [SerializeField] private Vector2 damageMinMax = Vector2.zero;
+    [SerializeField] private Vector2 poiseDmgMinMax = Vector2.zero;
+    [SerializeField] private Vector2 kbForceMinMax = Vector2.zero;
+    [SerializeField] private float critMultiplier = 2f;
+    [SerializeField] private Vector2 damageDelayMinMax = Vector2.zero;
+    [SerializeField] private Vector2 damageInstanceInterval = Vector2.zero;
+    [SerializeField] private Vector3 offsetFromPlayer = Vector3.zero;
+    [SerializeField] private Vector3 slashRotation = Vector3.zero;
+    [SerializeField] private Vector2 widthMinMax = Vector2.zero;
+    [SerializeField] private Vector2 heightMinMax = Vector2.zero;
+    [SerializeField] private Vector2 growSpeedMinMax = Vector2.zero;
+    [SerializeField] private Vector2 flySpeedMinMax = Vector2.zero;
+    [SerializeField] private Vector2 lifeTimeMinMax = Vector2.zero;
+    [SerializeField] private Vector2 spawnDelayMinMax = Vector2.zero;
+    [SerializeField] private Vector2 manaRegenPerHitMinMax = Vector2.zero;
+    [SerializeField] private Vector2 staminaRegenPerHitMinMax = Vector2.zero;
+
     private PlayerController control;
     private PlayerGravity gravity;
     private PlayerAttacks attack;
+    private PlayerMouthController mouth;
+    private TongueController tongue;
     private PlayerJumping jump;
     private PlayerStamina stamina;
     private SwordTrigger swordCol;
+    private SpecialTrigger specialCol;
     private PlayerRolling roll;
     private PlayerCrawl crawl;
     private PlayerRotate rotate;
@@ -46,27 +65,30 @@ public class PlayerSpecialAttack : MonoBehaviour {
     private Collider col;
     private Transform model;
     private Vector3 groundPoundLastLocation;
+    private NumberType attackType;
     private bool buttonHeld = false;
     private bool applyStartForce = true;
     private bool takeStep = false;
     private bool takeAimedStep = false;
     private bool groundPoundEnding = false;
-    private bool attackQueued, rollQueued, specialQueued, jumpQueued = false;
+    private bool charging = false;
     private float t, currentCharge, perc;
 
-    bool startedGrounded;
     Vector3 targetDir;
     Collider[] nearEnemyCols;
 
 
-    void Start() 
-    {
+        void Start() 
+        {
         control = GetComponent<PlayerController>();
         gravity = GetComponent<PlayerGravity>();
         attack = GetComponent<PlayerAttacks>();
+        mouth = GetComponent<PlayerMouthController>();
+        tongue = GetComponent<TongueController>();
         jump = GetComponent<PlayerJumping>();
         stamina = GetComponent<PlayerStamina>();
         swordCol = GetComponentInChildren<SwordTrigger>();
+        specialCol = GetComponentInChildren<SpecialTrigger>();
         roll = GetComponent<PlayerRolling>();
         crawl = GetComponent<PlayerCrawl>();
         rotate = GetComponentInChildren<PlayerRotate>();
@@ -89,50 +111,17 @@ public class PlayerSpecialAttack : MonoBehaviour {
             control.state == PlayerStates.SAMURAI ||
             control.state == PlayerStates.ROLL_SLASH) 
         {
-            specialQueued = true;
-            attackQueued = rollQueued = jumpQueued = false;
             return;
         }
 
         ChooseAndStartSpecial();
     }
-    void OnRoll()
-    {
-        if (control.state == PlayerStates.GROUND_POUND || control.state == PlayerStates.ROLL_SLASH || control.state == PlayerStates.BASEBALL || control.state == PlayerStates.SAMURAI)
-        {
-            rollQueued = true;
-            attackQueued = specialQueued = jumpQueued = false;
-        }
-    }
-    void OnAttack()
-    {
-        if (control.state == PlayerStates.GROUND_POUND || control.state == PlayerStates.ROLL_SLASH || control.state == PlayerStates.BASEBALL || control.state == PlayerStates.SAMURAI)
-        {
-            attackQueued = true;
-            specialQueued = rollQueued = jumpQueued = false;
-        }
-    }
-    void OnJump(InputValue value)
-    {
-        var pressed = value.isPressed;
-        if (!pressed)
-            return;
-            
-        if (control.state == PlayerStates.GROUND_POUND)
-        {
-            jumpQueued = true;
-            attackQueued = specialQueued = rollQueued = false;
-        }
-    }
 
     void ChooseAndStartSpecial()
     {
-        jumpQueued = attackQueued = rollQueued = specialQueued = false;
-
-        if (stamina.CanDrainStamina(airSlashInitialStaminaCost) == false)
+        if (stamina.HasStamina(initialStaminaCost) == false)
         {
             stamina.FlashStaminaBar();
-            control.state = PlayerStates.NORMAL;
             return;
         }
 
@@ -143,6 +132,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
         }
         else if (control.state == PlayerStates.ROLL || (control.state == PlayerStates.NORMAL && control.stepsSinceLastGrounded >= 3))
         {
+            roll.StopRoll();
             StartBaseballSamurai(PlayerStates.SAMURAI);
         }
     }
@@ -151,10 +141,6 @@ public class PlayerSpecialAttack : MonoBehaviour {
 
     public void SpecialFixedUpdate() 
     {
-        /*
-        if (control.state == PlayerStates.ROLL_SLASH)
-            RollSlashFixed();
-        */
         if (control.state == PlayerStates.GROUND_POUND)
             GroundPoundFixed();
         else if ((control.state == PlayerStates.BASEBALL || control.state == PlayerStates.SAMURAI) && hijackControls)
@@ -168,33 +154,179 @@ public class PlayerSpecialAttack : MonoBehaviour {
         t = currentCharge = 0;
         hijackControls = false;
         charging = false;
-        jumpQueued = attackQueued = rollQueued = specialQueued = false;
+        control.ResetQueuedAction();
         takeStep = takeAimedStep = false;
+        specialCol.ColliderOff();
+        swordCol.ColliderOff();
         model.rotation = Quaternion.LookRotation(new(model.forward.x, 0, model.forward.z));
     }
 
     // Baseball Samurai ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    bool charging = false;
     public void StartBaseballSamurai(PlayerStates state)
     {
+        control.ResetQueuedAction();
+        stamina.TryDrainStamina(initialStaminaCost);
         StopAllCoroutines();
         gravity.StopAfterSpecialGrav();
         applyStartForce = true;
-        jumpQueued = attackQueued = rollQueued = specialQueued = false;
         control.state = state;
         if (state == PlayerStates.BASEBALL)
-            anim.CrossFade("attack_special_baseballCharge", 0.5f, 0);
+            anim.CrossFade("attack_special_baseballCharge", 0.4f, 0);
         else if (state == PlayerStates.SAMURAI)
-            anim.CrossFade("attack_special_samuraiCharge", 0.5f, 0);
+            anim.CrossFade("attack_special_samuraiCharge", 0.4f, 0);
 
         takeStep = takeAimedStep = false;
-        t = currentCharge = perc = 0;
+        t = currentCharge = -timeBeforeCharge;
+        forceT = forcePerc = perc = 0;
         if (control.GetInput().sqrMagnitude > control.deadzoneSquared) {
             model.rotation = Quaternion.LookRotation(control.GetInput(), Vector3.up);
         }
         rotate.SetRotateSpdMod(0f);
         StartCoroutine(BaseballSamurai(state));
     }
+
+    private float forceT;
+    private float forcePerc;
+    IEnumerator BaseballSamurai(PlayerStates state)
+    {
+        // CHARGE
+        perc = 0;
+        while (buttonHeld && currentCharge < maxChargeDuration)
+        {
+            if (currentCharge >= 0)
+            {
+                if (stamina.TryDrainStamina(chargingStaminaCost * (1 - perc) * Time.unscaledDeltaTime))
+                {
+                    forceT += Time.unscaledDeltaTime;
+                    forcePerc = forceT / maxChargeDuration;
+                }
+            }
+            charging = true;
+            RotateWhileCharging();
+            currentCharge += Time.unscaledDeltaTime;
+            perc = Mathf.Max(0, currentCharge / maxChargeDuration);
+            Time.timeScale = Mathf.Lerp(timeScalePercMinMax.y, timeScalePercMinMax.x, perc);
+            perc = Mathf.Sin(perc * Mathf.PI * 0.5f);
+            anim.speed = Mathf.Lerp(1.1f, 4, perc);
+            LerpCameraDistance(); /////////////////?????????????? <<<<<<<<<< tätä ei oo tehty viel ollenkaan, lerppaa kamera vähän sisään ladatessa? jotai efektii
+            yield return null;
+        }
+        // ATTAKC
+        perc = currentCharge / maxChargeDuration;
+        colliders.ChangeToSmallCollider();
+        float dmgWithCrit = Mathf.Lerp(damageMinMax.x, damageMinMax.y, perc);
+        dmgWithCrit = attackType == NumberType.crit ? dmgWithCrit * critMultiplier : dmgWithCrit;
+        attack.target = null;
+        if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
+        {
+            targetDir = attack.AimAndChooseTarget(
+                2.1f + Mathf.Clamp(perc * 1.8f, 1, maxChargeDuration),
+                1.7f + Mathf.Clamp(perc * 1.8f, 1, maxChargeDuration));
+            model.rotation = Quaternion.LookRotation(new(targetDir.x, 0, targetDir.z));
+        }
+        currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(
+            offsetFromPlayer,
+            Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(slashRotation),
+            Mathf.Lerp(widthMinMax.x, widthMinMax.y, perc),
+            Mathf.Lerp(heightMinMax.x, heightMinMax.y, perc),
+            Mathf.Lerp(growSpeedMinMax.x, growSpeedMinMax.y, perc),
+            Mathf.Lerp(flySpeedMinMax.x, flySpeedMinMax.y, perc),
+            Mathf.Lerp(lifeTimeMinMax.x, lifeTimeMinMax.y, perc),
+            Mathf.Lerp(spawnDelayMinMax.x, spawnDelayMinMax.y, perc),
+            dmgWithCrit,
+            Mathf.Lerp(poiseDmgMinMax.x, poiseDmgMinMax.y, perc),
+            Mathf.Lerp(kbForceMinMax.x, kbForceMinMax.y, perc),
+            Mathf.Lerp(damageDelayMinMax.x, damageDelayMinMax.y, perc),
+            damageInstanceInterval,
+            Mathf.Lerp(manaRegenPerHitMinMax.x, manaRegenPerHitMinMax.y, perc),
+            Mathf.Lerp(staminaRegenPerHitMinMax.x, staminaRegenPerHitMinMax.y, perc),
+            attackType);
+
+        specialCol.ColliderOn(currentAttackInstance);
+        swordCol.ColliderOn(currentAttackInstance);
+        StartCoroutine(TurnHitboxesOffWithDelay(state));
+        Singleton.instance.PlayerHurt.Invulnerability(
+            Mathf.Lerp(timeInvulnerableMinMax.x, timeInvulnerableMinMax.y, perc));
+        perc = Mathf.Sin(perc * Mathf.PI * 0.5f);
+        charging = false;
+        anim.speed = 1;
+        Time.timeScale = 1;
+        IgnoreNearbyEnemies(true);
+        rotate.SetRotateSpdMod(0);
+        if (state == PlayerStates.BASEBALL)
+            anim.Play("attack_special_baseballSwing", 0, 0);
+        else if (state == PlayerStates.SAMURAI)
+            anim.Play("attack_special_samuraiSwing", 0, 0);
+
+        takeStep = true;
+        hijackControls = false;
+        attackType = forceT / maxChargeDuration > 0.75f ? NumberType.crit : NumberType.normal;
+        yield return Helpers.GetWait(Mathf.Lerp(hitDurationMinMax.x, hitDurationMinMax.y, perc));
+
+        // END
+        if (colliders.TryToStandUp() == false)
+        {
+            EndBaseballSamurai();
+            crawl.InitCrawlOnStuckUnder();
+            colliders.ChangeToSmallCollider();
+            yield break;
+        }
+        colliders.ChangeToStandUpColliders();
+
+        if (control.IsQueuedAction(QueuedAction.SPECIAL))
+        {
+            if (stamina.HasStamina(initialStaminaCost) == false)
+            {
+                stamina.FlashStaminaBar();
+                EndBaseballSamurai();
+                control.state = PlayerStates.NORMAL;
+                yield break;
+            }
+            else
+            {
+                ContinueBasSam(state);
+                yield break;
+            }
+        }
+        EndBaseballSamurai();
+        QueueCheckForSpecial();
+    }
+
+    public void EndBaseballSamurai()
+    {
+        if (control.PlayerGrounded == false)
+        {
+            gravity.AfterBasebSamuraiGravity();
+        }
+        Time.timeScale = 1;
+        IgnoreNearbyEnemies(false);
+        charging = false;
+        control.InitAccelerationModReturn(0.15f, false);
+        rotate.InitRotateSpdModReturn(0.15f);
+        model.rotation = Quaternion.LookRotation(new(model.forward.x, 0, model.forward.z));
+        hijackControls = false;
+        attack.target = null;
+        takeStep = takeAimedStep = false;
+        if (swordCol.triggerEnabled == true)
+        {
+            swordCol.ColliderOff();
+        }
+    }
+
+    void QueueCheckForSpecial()
+    {
+        StopAllCoroutines();
+        gravity.StopJumpCoroutines();
+        if (control.IsQueuedAction(QueuedAction.NULL))
+        {
+            control.state = PlayerStates.NORMAL;
+        }
+        else
+        {
+            control.InitQueuedAction();
+        }
+    }
+
 
     public Vector3 BaseballSamuraiMovement(
         Vector3 xAxis, float currX, Vector3 zAxis, float currZ)
@@ -242,7 +374,6 @@ public class PlayerSpecialAttack : MonoBehaviour {
         playerInput.y = Mathf.Abs(control.yAxis) > control.deadzone ? control.yAxis : 0;
         playerInput = playerInput.normalized; // Vector2.ClampMagnitude(playerInput, 1f);
         Transform inputSpace = control.GetPlrInputSpace();
-        float heldPerc = currentCharge / maxChargeDuration;
 
         if (inputSpace)
         {
@@ -256,23 +387,21 @@ public class PlayerSpecialAttack : MonoBehaviour {
                 }
                 else
                 {
-                    heldPerc = Mathf.Sin(heldPerc * Mathf.PI * 0.5f);
-                    inputSpaceForward.y *= heldPerc;
+                    perc = Mathf.Sin(perc * Mathf.PI * 0.5f);
+                    inputSpaceForward.y *= perc;
                     inputSpaceForward = inputSpaceForward.normalized;
                 }
             }
             if (control.PlayerGrounded == false && control.GetInput().sqrMagnitude < control.deadzoneSquared)
-                force += model.forward *
-                    (1 - (currentCharge / maxChargeDuration)) *
-                    stepMinimumForce * Mathf.Lerp(1, stepMaximumForceMult, heldPerc);
+                force += model.forward * Mathf.Lerp(stepForceMinMax.x, stepForceMinMax.y, forcePerc);
             else
-                force += (inputSpaceForward * playerInput.y + inputSpace.right * playerInput.x) *
-                        stepMinimumForce * Mathf.Lerp(1, stepMaximumForceMult, heldPerc);            
+                force += (inputSpaceForward * playerInput.y + inputSpace.right * playerInput.x).normalized *
+                        Mathf.Lerp(stepForceMinMax.x, stepForceMinMax.y, forcePerc);            
         }
         else
         {
-            force += (model.forward * playerInput.y + model.right * playerInput.x) * 
-                stepMinimumForce * Mathf.Lerp(1, stepMaximumForceMult, heldPerc);
+            force += (model.forward * playerInput.y + model.right * playerInput.x) *
+                Mathf.Lerp(stepForceMinMax.x, stepForceMinMax.y, forcePerc);
         }
         rb.AddForce(force, ForceMode.Impulse);
         takeStep = takeAimedStep = false;
@@ -303,89 +432,6 @@ public class PlayerSpecialAttack : MonoBehaviour {
             attack.target.position.x - transform.position.x,
             0,
             attack.target.position.z - transform.position.z).normalized);
-    }
-
-    IEnumerator BaseballSamurai(PlayerStates state)
-    {
-        stamina.CanDrainStamina(chargingStaminaCost * Time.unscaledDeltaTime);
-        // CHARGE
-        if (control.PlayerGrounded)
-            startedGrounded = true;
-        else
-            startedGrounded = false;
-
-        perc = 0;
-        while (
-            buttonHeld && 
-            currentCharge < maxChargeDuration && 
-            stamina.CanDrainStamina(chargingStaminaCost * (1 - perc) * Time.unscaledDeltaTime))
-        {
-            charging = true;
-            RotateWhileCharging();
-            currentCharge += Time.unscaledDeltaTime;
-            perc = currentCharge / maxChargeDuration;
-            perc = Mathf.Sin(perc * Mathf.PI * 0.5f);
-            if (startedGrounded)
-            {
-                Time.timeScale = Mathf.Lerp(0.9f, 0.1f, perc);
-                anim.speed = Mathf.Lerp(1.1f, 4, perc);
-            }
-            else
-            {
-                Time.timeScale = Mathf.Lerp(0.65f, 0.1f, perc);
-                anim.speed = Mathf.Lerp(1.6f, 4, perc);
-            }
-            LerpCameraDistance(); /////////////////////////////////////////////////////////////////////////////////////////?????????????? <<<<<<<<<< tätä ei oo tehty viel ollenkaan
-            yield return null;
-        }
-        // ATTACK
-        perc = currentCharge / maxChargeDuration;
-        perc = Mathf.Sin(perc * Mathf.PI * 0.5f);
-        charging = false;
-        anim.speed = 1;
-        Time.timeScale = 1;
-        IgnoreNearbyEnemies(true);
-        BaseballSamuraiHitboxTiming(state);
-        rotate.SetRotateSpdMod(0);
-        if (state == PlayerStates.BASEBALL)
-            anim.Play("attack_special_baseballSwing", 0, 0);
-        else if (state == PlayerStates.SAMURAI)
-            anim.Play("attack_special_samuraiSwing", 0, 0);
-        
-        attack.target = null;
-        if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
-        {
-            targetDir = attack.AimAndChooseTarget(
-                2.1f + Mathf.Clamp(perc * 1.8f, 1, maxChargeDuration),
-                1.7f + Mathf.Clamp(perc * 1.8f, 1, maxChargeDuration));
-            model.rotation = Quaternion.LookRotation(new(targetDir.x, 0, targetDir.z));
-        }
-        takeStep = true;
-        hijackControls = false;
-        SpawnSlashEffect(state);
-        if (state == PlayerStates.BASEBALL)
-            yield return Helpers.GetWait(firstHitDuration);
-        else if (state == PlayerStates.SAMURAI)
-            yield return Helpers.GetWait(secondHitDuration);
-
-        // END
-        if (specialQueued)
-        {
-            if (stamina.CanDrainStamina(airSlashInitialStaminaCost))
-            {
-                ContinueBasSam(state);
-                yield break;
-            }
-            else
-            {
-                stamina.FlashStaminaBar();
-                EndBaseballSamurai();
-            }
-        }
-        else
-        {
-            EndBaseballSamurai();
-        }
     }
 
     void ContinueBasSam(PlayerStates state)
@@ -434,172 +480,34 @@ public class PlayerSpecialAttack : MonoBehaviour {
         rotate.SetRotateSpdMod(p * maxChargeRotationMult);
     }
 
-    void SpawnSlashEffect(PlayerStates state)
+    IEnumerator TurnHitboxesOffWithDelay(PlayerStates state)
     {
         if (state == PlayerStates.BASEBALL)
         {
-            currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(
-                new Vector3(0, 0.75f, 1.2f),
-                Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(new Vector3(0, 0, 95)),
-                Mathf.Lerp(1.3f, 2, perc),
-                Mathf.Lerp(1.3f, 2, perc),
-                Mathf.Lerp(4.5f, 25, perc),
-                Mathf.Lerp(2, 40, perc),
-                Mathf.Lerp(0.1f, 0.2f, perc),
-                0.03f,
-                currentCharge,
-                manaRegenedPerHit);
-        }
-        else if (state == PlayerStates.SAMURAI)
-        {
-            currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(
-                new Vector3(0, 0.75f, 1.2f),
-                Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(new Vector3(0, 0, 95)),
-                Mathf.Lerp(1.3f, 2, perc),
-                Mathf.Lerp(1.3f, 2, perc),
-                Mathf.Lerp(4.5f, 25, perc),
-                Mathf.Lerp(2, 40, perc),
-                Mathf.Lerp(0.1f, 0.2f, perc),
-                0.03f,
-                currentCharge,
-                manaRegenedPerHit);
-        }
-    }
-
-    IEnumerator BaseballSamuraiHitboxTiming(PlayerStates state)
-    {
-        if (state == PlayerStates.BASEBALL)
-        {
-            yield return Helpers.GetWait(firstHitboxActivateTime);
-            if (swordCol.triggerEnabled == false)
-            {
-                swordCol.ColliderOn(currentAttackInstance);
-            }
             yield return Helpers.GetWait(firstHitHitboxLifetime);
             if (swordCol.triggerEnabled == true)
             {
+                specialCol.ColliderOff();
                 swordCol.ColliderOff();
             }
         }
-
         else if (state == PlayerStates.SAMURAI)
         {
-            yield return Helpers.GetWait(secondHitboxActivateTime);
-            if (swordCol.triggerEnabled == false)
-            {
-                swordCol.ColliderOn(currentAttackInstance);
-            }
             yield return Helpers.GetWait(secondHitHitboxLifetime);
             if (swordCol.triggerEnabled == true)
             {
+                specialCol.ColliderOff();
                 swordCol.ColliderOff();
             }
         }
     }
 
-    public void EndBaseballSamurai()
-    {
-        if (control.PlayerGrounded == false)
-        {
-            gravity.AfterBasebSamuraiGravity();
-        }
-        Time.timeScale = 1;
-        IgnoreNearbyEnemies(false);
-        charging = false;
-        control.InitAccelerationModReturn(0.15f, false);
-        rotate.InitRotateSpdModReturn(0.15f);
-        model.rotation = Quaternion.LookRotation(new(model.forward.x, 0, model.forward.z));
-        hijackControls = false;
-        attack.target = null;
-        takeStep = takeAimedStep = false;
-        if (swordCol.triggerEnabled == true)
-        {
-            swordCol.ColliderOff();
-        }
-        EndAndCheckIfQueuedAction();
-    }
-
-    // Roll slash ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    /*
-    void StartRollSlash() 
-    {
-        StopAllCoroutines();
-        control.state = PlayerStates.ROLL_SLASH;
-        roll.StopRoll();
-        rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);
-        control.SetVelocity(new Vector3(rb.velocity.x, 0, rb.velocity.z));
-        control.SetAccelerationMod(1);
-        control.moveSpeedMod = 1;
-        colliders.ChangeToSmallCollider();
-        if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
-        {
-            model.rotation = Quaternion.LookRotation(control.GetInput());
-        }
-        anim.Play("attack_roll", 0, 0);
-        
-        hijackControls = true;
-        canSlash = false;
-        t = 0;
-        StartCoroutine(RollSlash());
-    }
-
-    void RollSlashFixed() 
-    {
-        if (t < rollSlashDuration)
-        {
-            perc = 1 - t / rollSlashDuration;
-            control.SetVelocity(model.forward * rollSlashMoveSpeed * perc);
-        }
-    }
-
-    IEnumerator RollSlash() 
-    {
-        while (t < rollSlashDuration) 
-        {
-            control.SetAccelerationMod(0f);
-            rotate.SetRotateSpdMod(0f);
-            t += Time.deltaTime;
-            yield return null;
-        }
-        EndRollSlash();
-    }
-
-    void EndRollSlash()
-    {
-        hijackControls = false;
-        if (colliders.TryToStandUp() == false)
-        {
-            rotate.InitRotateSpdModReturn(0.1f);
-            control.InitAccelerationModReturn(0.1f, false);
-            crawl.InitCrawlOnStuckUnder();
-            StopAllCoroutines();
-        }
-        else if (buttonHeld)
-        {
-            colliders.ChangeToStandUpColliders();
-            anim.Play("attack_special_2ndPart", 0, 0);
-            t = buttonHeldTime = 0.25f;
-            control.state = PlayerStates.BASEBALL_SAMURAI;
-            takeStep = takeAimedStep = false;
-            attack.target = null;
-            StartCoroutine(BaseballSamurai());
-        }
-        else
-        {
-            colliders.ChangeToStandUpColliders();
-            rotate.InitRotateSpdModReturn(0.1f);
-            control.InitAccelerationModReturn(0.1f, false);
-            EndAndCheckIfQueuedAction();
-        }
-    }
-    */
-    //attack_special_2ndPart
 
     // Ground pound ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     public void StartGroundPound() 
     {
         control.state = PlayerStates.GROUND_POUND;
-        jumpQueued = attackQueued = rollQueued = specialQueued = false;
+        control.ResetQueuedAction();
         hijackControls = true;
         groundPoundEnding = false;
         anim.Play("attack_airStomp_start", 0, 0);
@@ -623,7 +531,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
                 StartCoroutine(EndGroundPound());
             }
             groundPoundLastLocation = transform.position;
-            control.SetVelocity(Vector3.down * 30f);
+            control.SetVelocity(Vector3.down * groundPoundSpeed);
         }
     }
 
@@ -652,62 +560,30 @@ public class PlayerSpecialAttack : MonoBehaviour {
         rotate.InitRotateSpdModReturn(0.6f);
         hijackControls = false;
         yield return Helpers.GetWait(0.2f);
-        CheckForQueuedActions();
+        GroundPoundQueueCheck();
         yield return Helpers.GetWait(0.2f);
-        EndAndCheckIfQueuedAction();
-    }
-
-    // Ending queuecheck
-    void CheckForQueuedActions()
-    {
-        if (jumpQueued)
+        if (control.IsQueuedAction(QueuedAction.SPECIAL) && stamina.HasStamina(initialStaminaCost))
         {
-            control.state = PlayerStates.NORMAL;
-            StopAllCoroutines();
-            jump.InitGroundPoundJump();
-        }
-        if (attackQueued)
-        {
-            control.state = PlayerStates.NORMAL;
-            StopAllCoroutines();
-            attack.InitAttack();
-        }
-        else if (specialQueued)
-        {
-            control.state = PlayerStates.NORMAL;
-            StopAllCoroutines();
-            ChooseAndStartSpecial();
-        }
-        else if (rollQueued)
-        {
-            control.state = PlayerStates.NORMAL;
-            StopAllCoroutines();
-            roll.InitRoll();
-        }
-    }
-
-    void EndAndCheckIfQueuedAction()
-    {
-        StopAllCoroutines();
-        if (attackQueued)
-        {
-            attack.InitAttack();
-        }
-        else if (specialQueued)
-        {
-            ChooseAndStartSpecial();
-        }
-        else if (rollQueued)
-        {
-            roll.InitRoll();
-        }
-        else if (jumpQueued)
-        {
-            jump.InitGroundPoundJump();
+            StartBaseballSamurai(PlayerStates.SAMURAI);
         }
         else
         {
+            GroundPoundQueueCheck();
+        }
+    }
+
+    void GroundPoundQueueCheck()
+    {
+        if (control.IsQueuedAction(QueuedAction.JUMP))
+        {
+            StopAllCoroutines();
             control.state = PlayerStates.NORMAL;
+            jump.InitGroundPoundJump();
+        }
+        else if (control.IsQueuedAction(QueuedAction.NULL) == false)
+        {
+            StopAllCoroutines();
+            control.InitQueuedAction();
         }
     }
 }

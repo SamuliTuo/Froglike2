@@ -8,10 +8,8 @@ public class AttackHitEffects : MonoBehaviour {
     public void SetActiveUpgrades(List<UpgradeType> activeUpgrades) {
         this.activeUpgrades = activeUpgrades;
     }
-
-
-    public void EnemyHit(Collider enemy) {
-        enemy.transform.root.GetComponent<Enemy_LeekHurt>().TakeDmg(gameObject, activeUpgrades);
-        Singleton.instance.VFXManager.SpawnVFX(VFXType.LEEK_IMPACT, enemy.transform.position);
+    public List<UpgradeType> GetActiveUpgrades()
+    {
+        return activeUpgrades;
     }
 }

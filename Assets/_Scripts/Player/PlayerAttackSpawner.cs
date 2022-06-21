@@ -8,7 +8,7 @@ public class PlayerAttackSpawner : MonoBehaviour
 
     private GameObject attackObject;
     private IObjectPool<GameObject> attackPool;
-    public void ResetPool() { attackPool.Clear(); }
+    public void ClearPool() { attackPool.Clear(); }
 
     // Start is called before the first frame update
     void Awake()
@@ -17,15 +17,20 @@ public class PlayerAttackSpawner : MonoBehaviour
         attackPool = new ObjectPool<GameObject>(CreateAttack, OnTakeAttackFromPool, OnReturnAttackToPool);
     }
 
-    public AttackInstance SpawnAttack(Vector3 pos, Quaternion rot, 
-        float width, float length, float growSpeed, float flySpeed, float slashLifeTime, float spawnDelay, 
-        float damage, float manaRegenPerHit)
+    public AttackInstance SpawnAttack(PlayerAttackScriptable attackScriptable, Transform model)
     {
         var obj = attackPool.Get();
-        obj.transform.position = Singleton.instance.Player.position;
-        obj.GetComponent<AttackInstance>().Init(pos, rot, width, length, growSpeed, flySpeed, slashLifeTime, 
-            spawnDelay, damage, manaRegenPerHit);
-        obj.transform.position = pos;
+        obj.GetComponent<AttackInstance>().Init(attackScriptable, model);
+        return obj.GetComponent<AttackInstance>();
+    }
+    public AttackInstance SpawnAttack(Vector3 offsetFromPlr, Quaternion rot, 
+        float width, float length, float growSpeed, float flySpeed, float slashLifeTime, float spawnDelay, 
+        float damage, float poiseDmg, float kbForce, float damageDelay, Vector2 damageInstanceInterval, 
+        float manaRegenPerHit, float staminaRegenedPerHit, NumberType attackType)
+    {
+        var obj = attackPool.Get();
+        obj.GetComponent<AttackInstance>().Init(offsetFromPlr, rot, width, length, growSpeed, flySpeed, slashLifeTime, 
+            spawnDelay, damage, poiseDmg, kbForce, damageDelay, damageInstanceInterval, manaRegenPerHit, staminaRegenedPerHit, true, attackType);
         return obj.GetComponent<AttackInstance>();
     }
 

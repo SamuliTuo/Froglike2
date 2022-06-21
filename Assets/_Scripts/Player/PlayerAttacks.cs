@@ -11,14 +11,19 @@ public class PlayerAttacks : MonoBehaviour {
     [SerializeField] private PlayerAbilityUpgradeHolder attackEffects = null;
     [SerializeField] private PlayerAttackScriptable groundAttack = null;
     [SerializeField] private PlayerAttackScriptable airAttack = null;
-    [SerializeField] private PlayerAttackScriptable rollAttack = null;  
+    [SerializeField] private PlayerAttackScriptable rollAttack = null;
+    [SerializeField] private float airAttackStepForceVertical = 1;
+    [SerializeField] private float airAttackStopForceHorizontal = 1;
     [SerializeField] private float targetPosOffsetFromPlayer = 1.6f;
     [SerializeField] private float aimerRadius = 2;
     [SerializeField] private float aimerDistance = 2;
 
     private PlayerController control;
+    private PlayerGravity gravity;
     private PlayerSpecialAttack special;
     private PlayerJumping jump;
+    private PlayerMouthController mouth;
+    private TongueController tongue;
     private PlayerRotate rotate;
     private PlayerRolling roll;
     private PlayerColliderChanges colliders;
@@ -33,16 +38,19 @@ public class PlayerAttacks : MonoBehaviour {
     private Transform model;
     private bool startedMoveReturn = false;
     private bool startedRotReturn = false;
-    private bool rollQueued, attackQueued, specialQueued, jumpQueued;
     private float attSpdModifier = 1;
     private float attackDuration;
     private float t;
 
 
     void Start() {
+        print("trying to do a NO STEP attack ova here!"); // rivillä 137 tarkemmin
         control = GetComponent<PlayerController>();
+        gravity = GetComponent<PlayerGravity>();
         special = GetComponent<PlayerSpecialAttack>();
         jump = GetComponent<PlayerJumping>();
+        mouth = GetComponent<PlayerMouthController>();
+        tongue = GetComponent<TongueController>();
         rotate = GetComponentInChildren<PlayerRotate>();
         roll = GetComponent<PlayerRolling>();
         colliders = GetComponent<PlayerColliderChanges>();
@@ -55,55 +63,25 @@ public class PlayerAttacks : MonoBehaviour {
     }
 
     void OnAttack() {
-        if (control.state == PlayerStates.ATTACK) {
-            if (currentAttack.nextAttack != null) {
-                this.nextAttack = currentAttack.nextAttack;
-                rollQueued = specialQueued = jumpQueued = false;
-                attackQueued = true;
-            }
-        }
         if (control.state == PlayerStates.NORMAL) {
             InitAttack();
         }
         else if (control.state == PlayerStates.ROLL) {
             if (colliders.TryToStandUp()) {
                 colliders.ChangeToStandUpColliders();
+                roll.StopRoll();
                 InitAttack(rollAttack);
             }
         }
     }
-    void OnRoll() {
-        if (control.state == PlayerStates.ATTACK) {
-            rollQueued = true;
-            attackQueued = specialQueued = jumpQueued = false;
-            nextAttack = null;
-        }
-    }
-    void OnSpecial(InputValue value) {
-        if (control.state == PlayerStates.ATTACK) {
-            specialQueued = true;
-            attackQueued = rollQueued = jumpQueued = false;
-            nextAttack = null;
-        }
-    }
-    void OnJump(InputValue value) {
-        var pressed = value.isPressed;
-        if (!pressed)
-            return;
-
-        if (control.state == PlayerStates.ATTACK) {
-            jumpQueued = true;
-            attackQueued = specialQueued = rollQueued = false;
-            nextAttack = null;
-        }
-    }
 
     public void InitAttack() {
-        if (control.PlayerGrounded) {
-            InitAttack(groundAttack);
-        }
-        else if (control.PlayerGrounded == false) {
+        if (control.PlayerGrounded == false) {
+            takeAirStep = true;
             InitAttack(airAttack);
+        }
+        else if (control.PlayerGrounded || control.stepsSinceLastGrounded < jump.maxLateJumpTimeSteps)  {
+            InitAttack(groundAttack);
         }
     }
     private Enemy_TongueInteraction targetScript = null;
@@ -112,7 +90,7 @@ public class PlayerAttacks : MonoBehaviour {
         currentAttack = attack;
         control.StopAfterSpecialGravity();
         nextAttack = null;
-        attackQueued = rollQueued = specialQueued = jumpQueued = false;
+        control.ResetQueuedAction();
         SetAttSpdModifier();
         attackHitEffects.SetActiveUpgrades(attackEffects.activeUpgrades);
         if (attack.attackDuration == 0) {
@@ -131,6 +109,11 @@ public class PlayerAttacks : MonoBehaviour {
         targetScript = null;
 
         //startPos = transform.position;
+        if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
+        {
+            ///////////////////////////////
+            /// puuuu.. tee askeleeton-versio lyönneistä
+        }
         var lookRot = AimAndChooseTarget(aimerRadius, aimerDistance);
         model.rotation = Quaternion.LookRotation(new(lookRot.x, 0, lookRot.z));
         if (target != null) {
@@ -149,24 +132,13 @@ public class PlayerAttacks : MonoBehaviour {
             control.SetVelocity(Vector3.zero);
             rb.velocity = Vector3.zero;
         }
-        else if (!control.PlayerGrounded && control.GetInput().sqrMagnitude > control.deadzoneSquared) {
+        else if (!control.PlayerGrounded && control.GetInput().sqrMagnitude > control.deadzoneSquared) 
+        {    
             control.SetVelocity(model.forward * currentAttack.stepForce);
         }
         startedMoveReturn = false;
         anim.Play(attack.animatorStateName, 0, attack.animationStartPerc);
-
-        // Slash banana:
-        currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(
-            currentAttack.spawnOffset,
-            Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(currentAttack.rotation),
-            currentAttack.width,
-            currentAttack.length,
-            currentAttack.growSpeed,
-            currentAttack.flySpeed,
-            currentAttack.lifeTime, 
-            currentAttack.spawnDelay, 
-            1, 
-            currentAttack.manaRegenedPerHit);
+        currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(currentAttack, model);
         StartCoroutine(UpdateAttack(attack));
     }
 
@@ -190,10 +162,19 @@ public class PlayerAttacks : MonoBehaviour {
         }
     }
 
+    bool takeAirStep = false;
     public Vector3 AttackWithoutTargetVector3(
         Vector3 xAxis, float currX,
         Vector3 zAxis, float currZ) 
     {
+        if (takeAirStep)
+        {
+            takeAirStep = false;
+            Vector3 veloAdd = Vector3.down * rb.velocity.y + Vector3.down * airAttackStepForceVertical + model.forward * airAttackStopForceHorizontal;
+            gravity.StopJumpCoroutines();
+            return veloAdd;
+        }
+
         float perc = 0;
         if (t < currentAttack.stepDuration * attSpdModifier) {
             perc = 1 - t / (currentAttack.stepDuration * attSpdModifier);
@@ -249,40 +230,25 @@ public class PlayerAttacks : MonoBehaviour {
 
             // If action queued, start it:
             if (t > attack.nextAttackInitPerc * attackDuration * attSpdModifier) {
-                if (attackQueued) {
-                    if (nextAttack != null) {
+                if (control.IsQueuedAction(QueuedAction.ATTACK))
+                {
+                    nextAttack = currentAttack.nextAttack;
+                    if (nextAttack != null)
+                    {
                         anim.speed = 1;
+                        takeAirStep = false;
                         weaponTrigger.ColliderOff();
                         InitAttack(nextAttack);
                         yield break;
                     }
                 }
-                else if (specialQueued) {
-                    anim.speed = 1;
-                    weaponTrigger.ColliderOff();
-                    hijackControls = false;
-                    if (Random.Range(0, 2) == 0)                    
-                        special.StartBaseballSamurai(PlayerStates.SAMURAI);                    
-                    else
-                        special.StartBaseballSamurai(PlayerStates.BASEBALL);
-                    yield break;
-                }
-                else if (rollQueued) {
-                    anim.speed = 1;
-                    weaponTrigger.ColliderOff();
-                    hijackControls = false;
-                    roll.InitRoll();
-                    yield break;
-                }
-                else if (jumpQueued)
+                else if (control.IsQueuedAction(QueuedAction.NULL) == false)
                 {
                     anim.speed = 1;
                     weaponTrigger.ColliderOff();
-                    jump.playerJumpPressed = true;
-                    hijackControls = false;
-                    nextAttack = null;
-                    currentAttack = null;
-                    control.state = PlayerStates.NORMAL;
+                    hijackControls = takeAirStep = false;
+                    nextAttack = currentAttack = null;
+                    control.InitQueuedAction();
                     yield break;
                 }
             }
@@ -297,10 +263,9 @@ public class PlayerAttacks : MonoBehaviour {
         StopAllCoroutines();
         t = 0;
         weaponTrigger.ColliderOff();
-        hijackControls = false;
-        currentAttack = null;
-        nextAttack = null;
-        attackQueued = specialQueued = rollQueued = false;
+        takeAirStep = hijackControls = false;
+        currentAttack = nextAttack = null;
+        control.ResetQueuedAction();
     }
 
     /// <summary>

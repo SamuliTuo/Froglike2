@@ -30,6 +30,10 @@ public class PlayerColliderChanges : MonoBehaviour {
     }
 
     public bool TryToStandUp() {
+        if (currentCol == colTypes.BIG)
+        {
+            return true;
+        }
         RaycastHit hit;
         if (Physics.SphereCast(
             transform.position + col.center,

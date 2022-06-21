@@ -9,9 +9,21 @@ EditorBuildSettings:
     path: Assets/_Scenes/dev_scene.unity
     guid: cab1c47bd2465ee42bf66e30f4202783
   - enabled: 1
-    path: Assets/_Scenes/lvl_01_beach.unity
-    guid: 78031495f70f47743a380d646f748740
+    path: Assets/_Scenes/01_shipwreckedToASmallIsland.unity
+    guid: b3938c5d77494304885016289172f3cb
   - enabled: 1
-    path: Assets/_Scenes/lvl_02_forest.unity
-    guid: f06f667ff15c1aa468cd5c83fdbfd176
+    path: Assets/_Scenes/02.unity
+    guid: 72e44b113ea33524599a5f0fded3d5a8
+  - enabled: 1
+    path: Assets/_Scenes/03.unity
+    guid: 384dce666b6af104081a9d1893e3d8b5
+  - enabled: 1
+    path: Assets/_Scenes/04.unity
+    guid: ef1e3634d1adfe147be1bc716145465b
+  - enabled: 1
+    path: Assets/_Scenes/05.unity
+    guid: bbc00550e20f64a48abfe6bae339d30c
+  - enabled: 1
+    path: Assets/_Scenes/06.unity
+    guid: 309cebc9288fd684f96c543fcc2eea18
   m_configObjects: {}
