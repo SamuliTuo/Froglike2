@@ -1210,8 +1210,8 @@ MonoBehaviour:
   specialCooldown: 0.2
   manaRegenedPerHit: 0.03
   maxChargeDuration: 2.43
-  chargingStaminaCost: 0.33
-  airSlashInitialStaminaCost: 0.2
+  chargingStaminaCost: 0.55
+  airSlashInitialStaminaCost: 0.28
   stepMinimumForce: 250
   stepMaximumForceMult: 5
   maxChargeRotationMult: 0.5
@@ -1324,7 +1324,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hpBar: {fileID: 0}
-  maxHP: 999
+  maxHP: 55
 --- !u!114 &6899321237300122559
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1337,9 +1337,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0badfb38c9d596643a21b366bdbe4fb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  groundRegenRate: 1.5
+  groundRegenRate: 0.8
   airRegenRate: 0.01
-  stepsUntilRegen: 25
+  stepsUntilRegen: 20
   stepsUntilDecay: 6
   stepsUntilDisappearWhenFull: 99
   StaminaFlashDuration: 0.2
@@ -1372,13 +1372,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5fd9f07483513ad478c0679136b0eb20, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxChargeTime: 1
-  minChargeTime: 0.3
-  maxTurnRate: 3
-  minForceMult: 0.3
-  maxForce: 50
-  manaCostCharging: 0.05
-  manaCostInitial: 0.3
+  offsetUp: 1.1
+  offsetForward: 0.7
+  slot1_phase1: {fileID: 11400000, guid: 4121c2b0d91abad40a44bc67800a07a4, type: 2}
+  slot1_phase2: {fileID: 11400000, guid: fb8b2c25e3bcdda43a0f87672fbbf5ad, type: 2}
 --- !u!114 &168555317770232269
 MonoBehaviour:
   m_ObjectHideFlags: 0
