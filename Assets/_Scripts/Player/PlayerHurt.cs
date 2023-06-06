@@ -17,9 +17,9 @@ public class PlayerHurt : MonoBehaviour {
     private PlayerHP hp;
     private Animator anim;
     private Rigidbody rb;
-    private Material mat;
+    //private Material mat;
     private float t;
-    private Color baseColor;
+    //private Color baseColor;
     private Vector3 hurtDir;
     public bool invulnerable = false;
     
@@ -30,8 +30,8 @@ public class PlayerHurt : MonoBehaviour {
         hp = GetComponent<PlayerHP>();
         anim = GetComponentInChildren<Animator>();
         rb = GetComponent<Rigidbody>();
-        mat = transform.GetChild(0).GetChild(2).GetComponent<SkinnedMeshRenderer>().material;
-        baseColor = mat.color;
+        //mat = transform.GetChild(0).GetChild(2).GetComponent<SkinnedMeshRenderer>().material;
+        //baseColor = mat.color;
         SetInvulnerability(false);
     }
     public void SetInvulnerability(bool state)
@@ -67,7 +67,7 @@ public class PlayerHurt : MonoBehaviour {
     }
 
     IEnumerator HurtCoroutine() {
-        mat.color = Color.red;
+        //mat.color = Color.red;
         yield return Helpers.GetWait(invulnerabilityTime * 0.3f);
         control.ResetPlayer();
         if (control.state != PlayerStates.CRAWL) {
@@ -75,7 +75,7 @@ public class PlayerHurt : MonoBehaviour {
         }
         yield return Helpers.GetWait(invulnerabilityTime * 0.7f);
         invulnerable = false;
-        mat.color = baseColor;
+        //mat.color = baseColor;
     }
 
     private Coroutine invuCoroutine = null;

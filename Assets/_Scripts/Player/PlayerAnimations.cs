@@ -19,6 +19,8 @@ public class PlayerAnimations : MonoBehaviour {
     }
 
     public void AnimateNormalState() {
+        SlidingOnWallsAnimations();
+
         if ((control.state == PlayerStates.NORMAL || control.state == PlayerStates.CARRYING) && 
             jump.playerCanJump)
         {
@@ -57,6 +59,47 @@ public class PlayerAnimations : MonoBehaviour {
             if (anim.GetAnimatorTransitionInfo(animLayer).anyState == false) {
                 anim.CrossFade(name, fadeDuration, animLayer, offset);
             }
+        }
+    }
+
+    float wallPerc = 0;
+    public void SlidingOnWallsAnimations()
+    {
+        if (control.PlayerOnSteep && !control.PlayerGrounded)
+        {
+            wallPerc = Mathf.Min(wallPerc += Time.deltaTime * 3, 0.8f);
+            float dirCheck = CheckIfLeftOrRight(transform.forward, control.steepNormal, transform.up);
+            float dot = Vector3.Dot(control.steepNormal.normalized, transform.forward);
+            float x = -dirCheck * (1 - Mathf.Abs(dot));
+            float z = -dot;
+            anim.SetFloat("wallX", x);
+            anim.SetFloat("wallZ", z);
+            print("x: " + x + ", z: " + z);
+        }
+        else
+            wallPerc = Mathf.Max(wallPerc -= Time.deltaTime * 5, 0);
+
+        anim.SetLayerWeight(2, wallPerc);
+    }
+
+    float CheckIfLeftOrRight(Vector3 fwd, Vector3 targetDir, Vector3 up)
+    {
+        Vector3 perp = Vector3.Cross(fwd, targetDir);
+        float dir = Vector3.Dot(perp, up);
+        // Right
+        if (dir > 0f)
+        {
+            return 1f;
+        }
+        // Left
+        else if (dir < 0f)
+        {
+            return -1f;
+        }
+        // Parallel
+        else
+        {
+            return 0f;
         }
     }
 }

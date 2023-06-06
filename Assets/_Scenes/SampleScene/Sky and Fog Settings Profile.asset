@@ -212,8 +212,8 @@ MonoBehaviour:
     m_OverrideState: 0
     m_Value: 0.009
   aerosolTint:
-    m_OverrideState: 0
-    m_Value: {r: 1, g: 0, b: 0, a: 1}
+    m_OverrideState: 1
+    m_Value: {r: 0.79432184, g: 0.8254621, b: 0.9622642, a: 1}
   aerosolMaximumAltitude:
     m_OverrideState: 0
     m_Value: 8289.296
@@ -224,8 +224,8 @@ MonoBehaviour:
     m_OverrideState: 0
     m_Value: 3
   groundTint:
-    m_OverrideState: 0
-    m_Value: {r: 0.4, g: 0.25, b: 0.15, a: 1}
+    m_OverrideState: 1
+    m_Value: {r: 0.17880027, g: 0.4115501, b: 0.9245283, a: 1}
   groundColorTexture:
     m_OverrideState: 0
     m_Value: {fileID: 0}
@@ -240,13 +240,13 @@ MonoBehaviour:
     m_Value: {x: 0, y: 0, z: 0}
   spaceEmissionTexture:
     m_OverrideState: 1
-    m_Value: {fileID: 8900000, guid: e3de3e8435d45a64fa4aa46634ced55a, type: 3}
+    m_Value: {fileID: 8900000, guid: c056ba959646d244a87e5f5629aae6d6, type: 3}
   spaceEmissionMultiplier:
     m_OverrideState: 1
     m_Value: 70000
   spaceRotation:
     m_OverrideState: 1
-    m_Value: {x: 0, y: 141, z: 0}
+    m_Value: {x: 0, y: 67.71, z: 0}
   colorSaturation:
     m_OverrideState: 1
     m_Value: 1

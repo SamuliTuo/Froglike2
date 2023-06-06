@@ -37,7 +37,7 @@ public class PlayerMouthController : MonoBehaviour
         meter_phase02 = o.GetChild(0).GetChild(1).GetComponent<Image>();
         bg_phase01 = o.GetChild(1).GetChild(0).gameObject;
         bg_phase02 = o.GetChild(0).GetChild(0).gameObject;
-        projectile = Resources.Load("Projectiles/projectile_sphere_01") as GameObject;
+        projectile = Resources.Load("Projectiles/projectile_fire_01") as GameObject;
         control = GetComponent<PlayerController>();
         mana = GetComponent<PlayerMana>();
         rotate = GetComponentInChildren<PlayerRotate>();
@@ -57,8 +57,6 @@ public class PlayerMouthController : MonoBehaviour
         }
     }
 
-
-
     public void InitFireball()
     {
         if (control.state == PlayerStates.NORMAL && mana.TryUseMana(slot1_phase1.manaCostInitial) )
@@ -73,7 +71,7 @@ public class PlayerMouthController : MonoBehaviour
             {
                 model.rotation = Quaternion.LookRotation(control.GetInput(), Vector3.up);
             }
-            anim.Play("wall_frontRight", 0, 0);
+            anim.Play("mouth_charge", 0, 0);
             currProjectile = slot1_phase1;
             currentPhase = ChargePhase.PHASE_01;
             t = perc = 0;
@@ -182,6 +180,7 @@ public class PlayerMouthController : MonoBehaviour
     void EndAndShoot()
     {
         StopAllCoroutines();
+        anim.Play("mouth_shoot", 0, 0);
         Time.timeScale = 1;
         Vector3 dir;
         if (inputSpace && control.GetInput().sqrMagnitude > control.deadzoneSquared)

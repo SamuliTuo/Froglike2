@@ -22,8 +22,9 @@ public class EnemyProjectile : MonoBehaviour
     private float totalDist;
     private float overshoot;
     private float projSpeed;
-    private float upwardsSpeed;
+    private float projSpeedUp;
     private float accuracyRandomness;
+    private float shootForce;
     private Vector3 shootDir;
     private Vector3 startPos;
     private Vector3 endPos;
@@ -46,7 +47,7 @@ public class EnemyProjectile : MonoBehaviour
         if (applyForce)
         {
             rb.useGravity = true;
-            //rb.velocity = ;
+            rb.AddForce(shootDir * shootForce * rb.mass, ForceMode.Impulse);
             projectileShot = true;
             applyForce = false;
         }
@@ -80,32 +81,37 @@ public class EnemyProjectile : MonoBehaviour
 
     void ShootCalc()
     {
-        shootDir = (shooter.transform.position - this.target).normalized;
+        Vector3 F = this.target - shooter.transform.position;
+        float Fx = new Vector3(F.x, 0, F.z).magnitude;
+        shootDir = (new Vector3(F.x, 0, F.z).normalized + Vector3.up).normalized;
+        shootForce = 20 / Mathf.Sqrt(2) * Mathf.Sqrt(9.81f / 2 * (Fx - F.y));
+            /*
         projStart = transform.root.position;
         projEnd = target;
-        projEnd += -shootDir * overshoot;
+        projEnd += -shootForce * overshoot;
         //projHandle = projEnd - (dir * 3f);
         projEnd.y += 1f;
         startPos = projStart;
-        endPos = projEnd;
+        endPos = projEnd;'*/
     }
 
-    public void InitProjectile(bool explodeOnImpact, float upwardsSpeed)
+    public void InitProjectile(Vector3 target, GameObject shooter, bool explodeOnImpact, float upwardsSpeed)
     {
+        this.target = target;
+        this.shooter = shooter;
         this.explodeOnImpact = explodeOnImpact;
         rb = GetComponent<Rigidbody>();
         ShootCalc();
         t = 0f;
         halfDone = false;
         applyForce = false;
-        rb.useGravity = false;
+        rb.useGravity = true;
     }
-    public void ShootProjectile(Vector3 target, float accuracyRandomness, float projSpeed, float upwardsSpeed)
+    public void ShootProjectile(float accuracyRandomness, float projSpeed, float projSpeedUp)
     {
         this.projSpeed = projSpeed;
         this.accuracyRandomness = accuracyRandomness;
-        this.upwardsSpeed = upwardsSpeed;
-        this.target = target;
+        this.projSpeedUp = projSpeedUp;
         t = 0;
         applyForce = true;
     }
@@ -139,8 +145,10 @@ public class EnemyProjectile : MonoBehaviour
         }
         else if (!col.CompareTag("Enemy") && !col.CompareTag("Loot") && !col.isTrigger)
         {
-            if (explodeOnImpact)
-                Explode();
+            if (explodeOnImpact) 
+            { 
+                Explode(); 
+            }
             StopAllCoroutines();
             Destroy(gameObject);
         }

@@ -126,7 +126,7 @@ public class PlayerRolling : MonoBehaviour {
         else if (t < 2) {
             if (rb.velocity.sqrMagnitude < (cRollMoveSpeed * 0.3f) * (cRollMoveSpeed * 0.3f)) {
                 animate.FadeToAnimation("idleWalkRun", 0.2f, 0);
-                EndRoll(false, false);
+                EndRoll();
                 return rb.velocity;
             }
 
@@ -143,7 +143,7 @@ public class PlayerRolling : MonoBehaviour {
         }
         else {
             rollingSpeed = stopSpd;
-            EndRoll(false, false);
+            EndRoll();
         }
 
         rollUpgradeEffects.RollEffectsSpawnAOEs();
@@ -167,7 +167,7 @@ public class PlayerRolling : MonoBehaviour {
         rollUpgradeEffects.RollEffectsCollisions(col);
     }
 
-    public void EndRoll(bool rollPressed, bool jump) {
+    public void EndRoll() {
         t = 2;
         continuousRoll = false;
 

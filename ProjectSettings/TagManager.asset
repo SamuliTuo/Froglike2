@@ -12,6 +12,7 @@ TagManager:
   - Grapple_stop
   - Spike
   - Loot
+  - Water
   layers:
   - Default
   - TransparentFX
@@ -24,7 +25,7 @@ TagManager:
   - Enemy
   - Loot
   - Carryable
-  - 
+  - Projectile_Enemy
   - 
   - 
   - 

@@ -17,20 +17,16 @@ public class PlayerAttackSpawner : MonoBehaviour
         attackPool = new ObjectPool<GameObject>(CreateAttack, OnTakeAttackFromPool, OnReturnAttackToPool);
     }
 
-    public AttackInstance SpawnAttack(PlayerAttackScriptable attackScriptable, Transform model)
+    public AttackInstance SpawnAttack(PlayerAttackScriptable attackScript, Transform model)
     {
         var obj = attackPool.Get();
-        obj.GetComponent<AttackInstance>().Init(attackScriptable, model);
+        obj.GetComponent<AttackInstance>().Init(attackScript, model);
         return obj.GetComponent<AttackInstance>();
     }
-    public AttackInstance SpawnAttack(Vector3 offsetFromPlr, Quaternion rot, 
-        float width, float length, float growSpeed, float flySpeed, float slashLifeTime, float spawnDelay, 
-        float damage, float poiseDmg, float kbForce, float damageDelay, Vector2 damageInstanceInterval, 
-        float manaRegenPerHit, float staminaRegenedPerHit, NumberType attackType)
+    public AttackInstance SpawnAttack(PlayerSpecialScriptable attackScript, Transform model, float perc)
     {
         var obj = attackPool.Get();
-        obj.GetComponent<AttackInstance>().Init(offsetFromPlr, rot, width, length, growSpeed, flySpeed, slashLifeTime, 
-            spawnDelay, damage, poiseDmg, kbForce, damageDelay, damageInstanceInterval, manaRegenPerHit, staminaRegenedPerHit, true, attackType);
+        obj.GetComponent<AttackInstance>().Init(attackScript, model, perc);
         return obj.GetComponent<AttackInstance>();
     }
 

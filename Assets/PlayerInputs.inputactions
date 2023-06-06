@@ -42,6 +42,33 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "ChangeElementLast",
+                    "type": "Button",
+                    "id": "6ac93064-9986-4728-88bc-c16d3085f790",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ChangeElementNext",
+                    "type": "Button",
+                    "id": "b63b1970-8cdb-4720-b8c4-deecd60e29bd",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "ApplyElementOnWeapon",
+                    "type": "Button",
+                    "id": "c9e7c129-5fce-425d-b94f-555c3b8c6695",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "Tongue",
                     "type": "Button",
                     "id": "670e2b50-50d4-40e7-80a9-f8c95ccbd9bc",
@@ -171,7 +198,7 @@
                 {
                     "name": "",
                     "id": "dc17a948-bbab-4056-a948-a84fede936af",
-                    "path": "<Keyboard>/f",
+                    "path": "<Keyboard>/g",
                     "interactions": "",
                     "processors": "",
                     "groups": "mouseAndKeyboard",
@@ -204,7 +231,7 @@
                 {
                     "name": "",
                     "id": "1ab484d6-1f7d-495f-9756-da764d34cf14",
-                    "path": "<Keyboard>/e",
+                    "path": "<Keyboard>/f",
                     "interactions": "",
                     "processors": "",
                     "groups": "mouseAndKeyboard",
@@ -534,11 +561,77 @@
                 {
                     "name": "",
                     "id": "c4a33e4f-8e94-462b-85b7-ea58a4c18c82",
-                    "path": "<Keyboard>/r",
+                    "path": "<Keyboard>/e",
                     "interactions": "",
                     "processors": "",
                     "groups": "mouseAndKeyboard",
                     "action": "Mouth",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7139aa5c-f58f-4c95-8644-851d15877162",
+                    "path": "<Keyboard>/1",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "mouseAndKeyboard",
+                    "action": "ChangeElementLast",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4818cc26-52a3-4ae3-a261-fecbd6a7d4b8",
+                    "path": "<Gamepad>/dpad/left",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "gamepad",
+                    "action": "ChangeElementLast",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "777705b8-a7ff-490f-a599-809e22047740",
+                    "path": "<Keyboard>/q",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "mouseAndKeyboard",
+                    "action": "ChangeElementNext",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f9c5df9f-1912-43bf-9a5c-6ff2996f9b21",
+                    "path": "<Gamepad>/dpad/right",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "gamepad",
+                    "action": "ChangeElementNext",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "47f527db-7ece-4f4a-b25a-f086686a1549",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "mouseAndKeyboard",
+                    "action": "ApplyElementOnWeapon",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "282b09cf-14f9-43cd-be1d-46a6df074440",
+                    "path": "<Gamepad>/dpad/down",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "gamepad",
+                    "action": "ApplyElementOnWeapon",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

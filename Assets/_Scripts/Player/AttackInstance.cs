@@ -5,6 +5,8 @@ using UnityEngine.Pool;
 
 public class AttackInstance : MonoBehaviour
 {
+    private float carryablePushForce = 600;
+
     private IObjectPool<GameObject> pool;
     public void SetPool(IObjectPool<GameObject> pool) => this.pool = pool;
     private Transform slashObj;
@@ -16,11 +18,13 @@ public class AttackInstance : MonoBehaviour
     private float staminaRegenAmount;
     private NumberType attackType;
     private float damage;
+    private Elements element;
     private float poiseDmg;
     private float kbForce;
     private float damageDelay;
     private Vector2 damageInstanceIntervalMinMax;
     private Vector3 playerPosAtSpawn;
+    private PlayerAttackScriptable script;
     private bool delayedHits;
     private float delayInterval;
     private float interval;
@@ -36,6 +40,7 @@ public class AttackInstance : MonoBehaviour
 
     public void Init(PlayerAttackScriptable script, Transform model)
     {
+        this.script = script;
         this.delayedHits = script.useDamageDelay;
         this.attackType = script.attackType;
         this.damage = script.damage;
@@ -54,43 +59,42 @@ public class AttackInstance : MonoBehaviour
         else
             StartCoroutine(LifeTime(script.lifeTime));
         
-        StartCoroutine(SlashCoroutine(
-            script.spawnOffset,
-            Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(script.rotation),
-            script.width, script.length, 
-            script.growSpeed, script.flySpeed, 
-            script.lifeTime, script.spawnDelay));
+        StartCoroutine(SlashCoroutine(script.spawnOffset, Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(script.rotation),
+            script.width, script.length, script.growSpeed, script.flySpeed, script.lifeTime, script.spawnDelay));
     }
-    public void Init(
-        Vector3 offsetFromPlr, Quaternion rot, 
-        float width, float length, float growSpeed, float flySpeed, float slashLifeTime, float spawnDelay, 
-        float damage, float poiseDmg, float kbForce, float damageDelay, 
-        Vector2 damageInstanceIntervalMinMax, float manaRegenAmount, float staminaRegenedPerHit,
-        bool delayedHits, NumberType attackType)
-    {
-        this.attackType = attackType;
-        this.delayedHits = delayedHits;
-        this.damage = damage;
-        this.poiseDmg = poiseDmg;
-        this.kbForce = kbForce;
-        this.damageDelay = damageDelay;
-        this.damageInstanceIntervalMinMax = damageInstanceIntervalMinMax;
-        this.staminaRegenAmount = staminaRegenedPerHit;
-        this.manaRegenAmount = manaRegenAmount;
-        playerPosAtSpawn = Singleton.instance.Player.position;
 
+    public void Init(PlayerSpecialScriptable attackScript, Transform model, float perc)
+    {
+        float dmgWithCrit = Mathf.Lerp(attackScript.damageMinMax.x, attackScript.damageMinMax.y, perc);
+        dmgWithCrit = attackType == NumberType.crit ? dmgWithCrit * attackScript.critMultiplier : dmgWithCrit;
+        float lifeTime = Mathf.Lerp(attackScript.lifeTimeMinMax.x, attackScript.lifeTimeMinMax.y, perc);
+        this.element = attackScript.attackElement;
+        this.delayedHits = attackScript.useDamageDelay;
+        this.attackType = attackScript.damageNumberType;
+        this.damage = dmgWithCrit;
+        this.poiseDmg = Mathf.Lerp(attackScript.poiseDmgMinMax.x, attackScript.poiseDmgMinMax.y, perc);
+        this.kbForce = Mathf.Lerp(attackScript.kbForceMinMax.x, attackScript.kbForceMinMax.y, perc);
+        this.damageDelay = Mathf.Lerp(attackScript.damageDelayMinMax.x, attackScript.damageDelayMinMax.y, perc);
+        this.damageInstanceIntervalMinMax = attackScript.damageInstanceIntervalMinMax;
+        this.staminaRegenAmount = Mathf.Lerp(attackScript.staminaRegenedPerHitMinMax.x, attackScript.staminaRegenedPerHitMinMax.y, perc);
+        this.manaRegenAmount = Mathf.Lerp(attackScript.manaRegenedPerHitMinMax.x, attackScript.manaRegenedPerHitMinMax.y, perc);
+        playerPosAtSpawn = model.parent.position;
         objectsHit.Clear();
         objectsHitApplied.Clear();
         if (delayedHits)
-            StartCoroutine(DelayedHits(slashLifeTime));
+            StartCoroutine(DelayedHits(lifeTime));
         else
-            StartCoroutine(LifeTime(slashLifeTime));
+            StartCoroutine(LifeTime(lifeTime));
 
         StartCoroutine(SlashCoroutine(
-            offsetFromPlr, rot,
-            width, length,
-            growSpeed, flySpeed,
-            slashLifeTime, spawnDelay));
+            attackScript.spawnOffset,
+            Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(attackScript.spawnRotation),
+            Mathf.Lerp(attackScript.widthMinMax.x, attackScript.widthMinMax.y, perc),
+            Mathf.Lerp(attackScript.lengthMinMax.x, attackScript.lengthMinMax.y, perc),
+            Mathf.Lerp(attackScript.growSpeedMinMax.x, attackScript.growSpeedMinMax.y, perc),
+            Mathf.Lerp(attackScript.flySpeedMinMax.x, attackScript.flySpeedMinMax.y, perc),
+            lifeTime, 
+            Mathf.Lerp(attackScript.spawnDelayMinMax.x, attackScript.spawnDelayMinMax.y, perc)));
     }
 
     public void AddToObjectsHit(GameObject obj)
@@ -100,14 +104,14 @@ public class AttackInstance : MonoBehaviour
             return;
         }
 
-        if (delayedHits)
-        {
-            objectsHit.Add(obj);
-        }
-        else
+        if (delayedHits == false || obj.CompareTag("Carryable"))
         {
             objectsHitApplied.Add(obj);
             HitObject(obj);
+        }
+        else
+        {
+            objectsHit.Add(obj);
         }
     }
 
@@ -115,9 +119,24 @@ public class AttackInstance : MonoBehaviour
     {
         Singleton.instance.PlayerStamina.GainStamina(staminaRegenAmount);
         Singleton.instance.PlayerMana.RegenMana(manaRegenAmount);
-        obj.GetComponent<Enemy_LeekHurt>().TakeDmg(playerPosAtSpawn, hitEffects.GetActiveUpgrades(), damage, poiseDmg, kbForce);
-        //Singleton.instance.VFXManager.SpawnVFX(VFXType.LEEK_IMPACT, obj.transform.position);
+        if (obj.CompareTag("Enemy"))
+        {
+            obj.GetComponent<Enemy_LeekHurt>().TakeDmg(playerPosAtSpawn, hitEffects.GetActiveUpgrades(), damage, poiseDmg, kbForce);
+        }
+        else
+        {
+            PushCarryable(obj);
+        }
         Singleton.instance.VFXManager.SpawnDamageNumbers(playerPosAtSpawn, obj.transform.position + Vector3.up, Vector3.up * 6, damage * 100, attackType);
+        //Singleton.instance.VFXManager.SpawnVFX(VFXType.LEEK_IMPACT, obj.transform.position);
+    }
+
+    void PushCarryable(GameObject obj) {
+        var rb = obj.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.AddForce((obj.transform.position - playerPosAtSpawn).normalized * damage * carryablePushForce, ForceMode.Impulse);
+        }
     }
 
     IEnumerator DelayedHits (float lifetime)
@@ -194,7 +213,7 @@ public class AttackInstance : MonoBehaviour
 
     void Hit(Collider other)
     {
-        if (other.CompareTag("Enemy") && other.isTrigger == false)
+        if ((other.CompareTag("Enemy") || other.CompareTag("Carryable")) && other.isTrigger == false)
         {
             AddToObjectsHit(other.transform.root.gameObject);
         }

@@ -18,7 +18,8 @@ public enum PlayerStates{
     CARRYING,
     TONGUE_PULL,
     GRAPPLE,
-    MOUTH
+    MOUTH,
+    BUFFING_WEAPON,
 };
 
 public class PlayerController : MonoBehaviour {
@@ -67,6 +68,7 @@ public class PlayerController : MonoBehaviour {
     private PlayerCrawl crawl;
     private PlayerClimbing climb;
     private PlayerMouthController mouth;
+    private WeaponBuffController weaponBuff;
     private TongueController tongue;
     private PlayerGrapple grapple;
     private PlayerHurt hurt;
@@ -116,6 +118,7 @@ public class PlayerController : MonoBehaviour {
         crawl = GetComponent<PlayerCrawl>();
         climb = GetComponent<PlayerClimbing>();
         mouth = GetComponent<PlayerMouthController>();
+        weaponBuff = GetComponentInChildren<WeaponBuffController>();
         tongue = GetComponent<TongueController>();
         grapple = GetComponent<PlayerGrapple>();
         hurt = GetComponent<PlayerHurt>();
@@ -437,6 +440,7 @@ public class PlayerController : MonoBehaviour {
 
     public void ResetPlayer() {
         groundContactCount = 1;
+        
         roll.StopRoll();
         attack.StopAttacks();
         if (state == PlayerStates.CLIMB) {
@@ -445,6 +449,7 @@ public class PlayerController : MonoBehaviour {
         special.ResetSpecial();
         grapple.InterruptGrapple();
         tongue.InterruptTonguePull();
+        weaponBuff.InterruptWeaponBuff();
         Singleton.instance.CameraChanger.ToggleLongJumpCamera(false);
         if (colChanger.currentCol == colTypes.SMALL && !colChanger.TryToStandUp()) {
             crawl.InitCrawlOnStuckUnder();

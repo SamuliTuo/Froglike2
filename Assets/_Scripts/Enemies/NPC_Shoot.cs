@@ -13,11 +13,10 @@ public class NPC_Shoot : MonoBehaviour {
     private float antiAnimStartPerc, shootAnimStartPerc, endAnimStartPerc;
     private float rotateStartTime, rotateEndTime, rotateSpeed;
     private float t = 0;
-    private float projSpeed, projOvershootDist;
+    private float projSpeed, projSpeedUp, projOvershootDist;
     private Transform target;
     private GameObject projectile;
-    private object catchAnim;
-    private bool hatCatched = false;
+    private float accuracy;
 
 
     void Start() {
@@ -46,10 +45,11 @@ public class NPC_Shoot : MonoBehaviour {
             GameObject target, 
             GameObject projectile,
             float projSpeed,
+            float projSpeedUp,
             float projOvershootDist,
+            float accuracy,
             out float timeToWait) 
         {
-        this.catchAnim = endAnim;
         this.endAnimSpeed = endAnimSpeed;
         this.endAnimStartPerc = endAnimStartPerc;
         this.rotateStartTime = rotateStartTime;
@@ -67,12 +67,11 @@ public class NPC_Shoot : MonoBehaviour {
         this.target = target.transform;
         this.projectile = projectile;
         this.projSpeed = projSpeed;
+        this.projSpeedUp = projSpeedUp;
         this.projOvershootDist = projOvershootDist;
         timeToWait = this.antiDuration + this.shootDuration + this.endDuration;
         t = 0;
-        hatCatched = false;
         StartCoroutine(Shoot(antiAnim, shootAnim, endAnim));
-        //bool waitForReturnOrNo???
         //joku timeri, jonka jälkeen sieni alkaa tekemään seuraavaa actionia odottamatta hatun paluuta?
     }
 
@@ -82,39 +81,25 @@ public class NPC_Shoot : MonoBehaviour {
         yield return Helpers.GetWait(antiDuration);
         combat.SetCanBeInterrupted(false);
         animate.PlayAnimation(shootAnim, shootAnimStartPerc, shootAnimSpeed);
+        InstProjectile();
         yield return Helpers.GetWait(shootDuration);
         combat.SetCanBeInterrupted(true);
         animate.PlayAnimation(endAnim, endAnimStartPerc, endAnimSpeed);
-        InstProjectile();
     }
 
     private void InstProjectile() {
         Vector3 spawnPos = transform.position;
         //spawnPos += transform.root.forward * 3f;
         spawnPos.y += 2f;
-        var pr = Instantiate(projectile, spawnPos, Quaternion.identity);
-        /* pistä tää kuntoon käyttäen sitä uutta EnemyProjectile classiä
-        pr.GetComponent<EnemyProjectile>().InitProjectile(
+        var cloneScript = Instantiate(projectile, spawnPos, Quaternion.identity).
+            GetComponent<EnemyProjectile>();
+        cloneScript.InitProjectile(target.position, gameObject, false, 3);
+        cloneScript.ShootProjectile(accuracy, projSpeed, projSpeedUp);
+            /*
             target.position, 
             gameObject, 
             projOvershootDist, 
-            projSpeed);
-        */
-    }
-
-    public void CatchProjectile() {
-        animate.PlayAnimation(catchAnim, endAnimStartPerc, endAnimSpeed);
-        agent.isStopped = false;
-        agent.ResetPath();
-        StartCoroutine(WaitForCatchAnimationDuration());
-    }
-    IEnumerator WaitForCatchAnimationDuration() {
-        yield return Helpers.GetWait(endDuration);
-        combat.SetCanBeInterrupted(true);
-        hatCatched = true;
-    }
-    public bool HatCatched() {
-        return hatCatched;
+            projSpeed);*/
     }
 
     public bool Obstructed(Vector3 target) {
@@ -142,7 +127,7 @@ public class NPC_Shoot : MonoBehaviour {
         return layerMask;
     }
 
-    public void BoomerangThrowRotation() {
+    public void ShootRotation() {
         t += Time.deltaTime;
         if (t >= rotateStartTime && t < rotateEndTime) {
             Vector3 dir = target.position - transform.position;
@@ -151,7 +136,7 @@ public class NPC_Shoot : MonoBehaviour {
         }
     }
 
-    public void ExitBoomerangThrowState() {
+    public void ExitShootState() {
         StopAllCoroutines();
         agent.isStopped = false;
     }

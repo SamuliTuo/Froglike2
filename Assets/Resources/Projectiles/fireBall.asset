@@ -24,7 +24,7 @@ MonoBehaviour:
   projectileScaleMax: {x: 1.1, y: 1.1, z: 1.1}
   manaCostInitial: 0
   manaCostOngoing: 0.01
-  chargeTimeMin: 0.1
+  chargeTimeMin: 0.13
   chargeTimeMax: 0.8
   shootForceUpMultiplier: 0.1
   shootForceForwardMultiplier: 1

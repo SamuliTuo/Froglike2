@@ -5,52 +5,15 @@ using UnityEngine.InputSystem;
 
 public class PlayerSpecialAttack : MonoBehaviour {
 
-    public float initialStaminaCost = 0.25f;
-
+    public PlayerSpecialScriptable attackScript = null;
     [HideInInspector] public bool hijackControls = false;
 
     [Header("Ground Pound")]
     [SerializeField] private float groundPoundInitialStopDuration = 0.4f;
     [SerializeField] private float groundPoundSpeed = 30f;
-
-    [Header("Baseball Samurai")]
-    [SerializeField] private Vector2 timeInvulnerableMinMax = Vector2.zero;
-    [Space]
-    [SerializeField] private float maxChargeDuration = 2;
-    [SerializeField] private float chargingStaminaCost = 0.01f;
-    [SerializeField] private float timeBeforeCharge = 0.1f;
-    [SerializeField] private Vector2 timeScalePercMinMax = Vector2.zero;
-    [Space]
-    [SerializeField] private Vector2 stepForceMinMax = Vector2.zero;
-    [SerializeField] private float maxChargeRotationMult = 0.5f;
-    [Space]
-    [SerializeField] private Vector2 hitDurationMinMax = Vector2.zero;
-    [SerializeField] private float firstHitHitboxLifetime = 0.2f;
-    [SerializeField] private float secondHitHitboxLifetime = 0.4f;
-
-    [Header("Slash Effect (minMax = lerp from min time charged to max)")] 
-    [SerializeField] private Vector2 damageMinMax = Vector2.zero;
-    [SerializeField] private Vector2 poiseDmgMinMax = Vector2.zero;
-    [SerializeField] private Vector2 kbForceMinMax = Vector2.zero;
-    [SerializeField] private float critMultiplier = 2f;
-    [SerializeField] private Vector2 damageDelayMinMax = Vector2.zero;
-    [SerializeField] private Vector2 damageInstanceInterval = Vector2.zero;
-    [SerializeField] private Vector3 offsetFromPlayer = Vector3.zero;
-    [SerializeField] private Vector3 slashRotation = Vector3.zero;
-    [SerializeField] private Vector2 widthMinMax = Vector2.zero;
-    [SerializeField] private Vector2 heightMinMax = Vector2.zero;
-    [SerializeField] private Vector2 growSpeedMinMax = Vector2.zero;
-    [SerializeField] private Vector2 flySpeedMinMax = Vector2.zero;
-    [SerializeField] private Vector2 lifeTimeMinMax = Vector2.zero;
-    [SerializeField] private Vector2 spawnDelayMinMax = Vector2.zero;
-    [SerializeField] private Vector2 manaRegenPerHitMinMax = Vector2.zero;
-    [SerializeField] private Vector2 staminaRegenPerHitMinMax = Vector2.zero;
-
     private PlayerController control;
     private PlayerGravity gravity;
     private PlayerAttacks attack;
-    private PlayerMouthController mouth;
-    private TongueController tongue;
     private PlayerJumping jump;
     private PlayerStamina stamina;
     private SwordTrigger swordCol;
@@ -78,13 +41,11 @@ public class PlayerSpecialAttack : MonoBehaviour {
     Collider[] nearEnemyCols;
 
 
-        void Start() 
+    void Start() 
         {
         control = GetComponent<PlayerController>();
         gravity = GetComponent<PlayerGravity>();
         attack = GetComponent<PlayerAttacks>();
-        mouth = GetComponent<PlayerMouthController>();
-        tongue = GetComponent<TongueController>();
         jump = GetComponent<PlayerJumping>();
         stamina = GetComponent<PlayerStamina>();
         swordCol = GetComponentInChildren<SwordTrigger>();
@@ -119,7 +80,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
 
     void ChooseAndStartSpecial()
     {
-        if (stamina.HasStamina(initialStaminaCost) == false)
+        if (stamina.HasStamina(attackScript.initialStaminaCost) == false)
         {
             stamina.FlashStaminaBar();
             return;
@@ -165,7 +126,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
     public void StartBaseballSamurai(PlayerStates state)
     {
         control.ResetQueuedAction();
-        stamina.TryDrainStamina(initialStaminaCost);
+        stamina.TryDrainStamina(attackScript.initialStaminaCost);
         StopAllCoroutines();
         gravity.StopAfterSpecialGrav();
         applyStartForce = true;
@@ -176,7 +137,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
             anim.CrossFade("attack_special_samuraiCharge", 0.4f, 0);
 
         takeStep = takeAimedStep = false;
-        t = currentCharge = -timeBeforeCharge;
+        t = currentCharge = -attackScript.timeBeforeChargeStarts;
         forceT = forcePerc = perc = 0;
         if (control.GetInput().sqrMagnitude > control.deadzoneSquared) {
             model.rotation = Quaternion.LookRotation(control.GetInput(), Vector3.up);
@@ -191,62 +152,47 @@ public class PlayerSpecialAttack : MonoBehaviour {
     {
         // CHARGE
         perc = 0;
-        while (buttonHeld && currentCharge < maxChargeDuration)
+        while (buttonHeld && currentCharge < attackScript.maxChargeDuration)
         {
             if (currentCharge >= 0)
             {
-                if (stamina.TryDrainStamina(chargingStaminaCost * (1 - perc) * Time.unscaledDeltaTime))
+                if (stamina.TryDrainStamina(attackScript.chargingStaminaCost * (1 - perc) * Time.unscaledDeltaTime))
                 {
                     forceT += Time.unscaledDeltaTime;
-                    forcePerc = forceT / maxChargeDuration;
+                    forcePerc = forceT / attackScript.maxChargeDuration;
                 }
             }
             charging = true;
             RotateWhileCharging();
             currentCharge += Time.unscaledDeltaTime;
-            perc = Mathf.Max(0, currentCharge / maxChargeDuration);
-            Time.timeScale = Mathf.Lerp(timeScalePercMinMax.y, timeScalePercMinMax.x, perc);
+            perc = Mathf.Max(0, currentCharge / attackScript.maxChargeDuration);
+            Time.timeScale = Mathf.Lerp(attackScript.timeScalePercMinMax.y, attackScript.timeScalePercMinMax.x, perc);
             perc = Mathf.Sin(perc * Mathf.PI * 0.5f);
             anim.speed = Mathf.Lerp(1.1f, 4, perc);
             LerpCameraDistance(); /////////////////?????????????? <<<<<<<<<< tätä ei oo tehty viel ollenkaan, lerppaa kamera vähän sisään ladatessa? jotai efektii
             yield return null;
         }
         // ATTAKC
-        perc = currentCharge / maxChargeDuration;
+        perc = currentCharge / attackScript.maxChargeDuration;
         colliders.ChangeToSmallCollider();
-        float dmgWithCrit = Mathf.Lerp(damageMinMax.x, damageMinMax.y, perc);
-        dmgWithCrit = attackType == NumberType.crit ? dmgWithCrit * critMultiplier : dmgWithCrit;
+        float dmgWithCrit = Mathf.Lerp(attackScript.damageMinMax.x, attackScript.damageMinMax.y, perc);
+        dmgWithCrit = attackType == NumberType.crit ? dmgWithCrit * attackScript.critMultiplier : dmgWithCrit;
         attack.target = null;
         if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
         {
             targetDir = attack.AimAndChooseTarget(
-                2.1f + Mathf.Clamp(perc * 1.8f, 1, maxChargeDuration),
-                1.7f + Mathf.Clamp(perc * 1.8f, 1, maxChargeDuration));
+                2.1f + Mathf.Clamp(perc * 1.8f, 1, attackScript.maxChargeDuration),
+                1.7f + Mathf.Clamp(perc * 1.8f, 1, attackScript.maxChargeDuration));
             model.rotation = Quaternion.LookRotation(new(targetDir.x, 0, targetDir.z));
         }
-        currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(
-            offsetFromPlayer,
-            Quaternion.LookRotation(model.forward, Vector3.up) * Quaternion.Euler(slashRotation),
-            Mathf.Lerp(widthMinMax.x, widthMinMax.y, perc),
-            Mathf.Lerp(heightMinMax.x, heightMinMax.y, perc),
-            Mathf.Lerp(growSpeedMinMax.x, growSpeedMinMax.y, perc),
-            Mathf.Lerp(flySpeedMinMax.x, flySpeedMinMax.y, perc),
-            Mathf.Lerp(lifeTimeMinMax.x, lifeTimeMinMax.y, perc),
-            Mathf.Lerp(spawnDelayMinMax.x, spawnDelayMinMax.y, perc),
-            dmgWithCrit,
-            Mathf.Lerp(poiseDmgMinMax.x, poiseDmgMinMax.y, perc),
-            Mathf.Lerp(kbForceMinMax.x, kbForceMinMax.y, perc),
-            Mathf.Lerp(damageDelayMinMax.x, damageDelayMinMax.y, perc),
-            damageInstanceInterval,
-            Mathf.Lerp(manaRegenPerHitMinMax.x, manaRegenPerHitMinMax.y, perc),
-            Mathf.Lerp(staminaRegenPerHitMinMax.x, staminaRegenPerHitMinMax.y, perc),
-            attackType);
+        currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(attackScript, model, perc);
+            
 
         specialCol.ColliderOn(currentAttackInstance);
         swordCol.ColliderOn(currentAttackInstance);
         StartCoroutine(TurnHitboxesOffWithDelay(state));
         Singleton.instance.PlayerHurt.Invulnerability(
-            Mathf.Lerp(timeInvulnerableMinMax.x, timeInvulnerableMinMax.y, perc));
+            Mathf.Lerp(attackScript.timeInvulnerableMinMax.x, attackScript.timeInvulnerableMinMax.y, perc));
         perc = Mathf.Sin(perc * Mathf.PI * 0.5f);
         charging = false;
         anim.speed = 1;
@@ -260,8 +206,8 @@ public class PlayerSpecialAttack : MonoBehaviour {
 
         takeStep = true;
         hijackControls = false;
-        attackType = forceT / maxChargeDuration > 0.75f ? NumberType.crit : NumberType.normal;
-        yield return Helpers.GetWait(Mathf.Lerp(hitDurationMinMax.x, hitDurationMinMax.y, perc));
+        attackType = forceT / attackScript.maxChargeDuration > 0.75f ? NumberType.crit : NumberType.normal;
+        yield return Helpers.GetWait(Mathf.Lerp(attackScript.hitDurationMinMax.x, attackScript.hitDurationMinMax.y, perc));
 
         // END
         if (colliders.TryToStandUp() == false)
@@ -275,7 +221,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
 
         if (control.IsQueuedAction(QueuedAction.SPECIAL))
         {
-            if (stamina.HasStamina(initialStaminaCost) == false)
+            if (stamina.HasStamina(attackScript.initialStaminaCost) == false)
             {
                 stamina.FlashStaminaBar();
                 EndBaseballSamurai();
@@ -393,15 +339,15 @@ public class PlayerSpecialAttack : MonoBehaviour {
                 }
             }
             if (control.PlayerGrounded == false && control.GetInput().sqrMagnitude < control.deadzoneSquared)
-                force += model.forward * Mathf.Lerp(stepForceMinMax.x, stepForceMinMax.y, forcePerc);
+                force += model.forward * Mathf.Lerp(attackScript.stepForceMinMax.x, attackScript.stepForceMinMax.y, forcePerc);
             else
                 force += (inputSpaceForward * playerInput.y + inputSpace.right * playerInput.x).normalized *
-                        Mathf.Lerp(stepForceMinMax.x, stepForceMinMax.y, forcePerc);            
+                        Mathf.Lerp(attackScript.stepForceMinMax.x, attackScript.stepForceMinMax.y, forcePerc);            
         }
         else
         {
             force += (model.forward * playerInput.y + model.right * playerInput.x) *
-                Mathf.Lerp(stepForceMinMax.x, stepForceMinMax.y, forcePerc);
+                Mathf.Lerp(attackScript.stepForceMinMax.x, attackScript.stepForceMinMax.y, forcePerc);
         }
         rb.AddForce(force, ForceMode.Impulse);
         takeStep = takeAimedStep = false;
@@ -475,16 +421,16 @@ public class PlayerSpecialAttack : MonoBehaviour {
 
     void RotateWhileCharging()
     {
-        var p = currentCharge / maxChargeDuration;
+        var p = currentCharge / attackScript.maxChargeDuration;
         p *= p;
-        rotate.SetRotateSpdMod(p * maxChargeRotationMult);
+        rotate.SetRotateSpdMod(p * attackScript.maxChargeRotationMult);
     }
 
     IEnumerator TurnHitboxesOffWithDelay(PlayerStates state)
     {
         if (state == PlayerStates.BASEBALL)
         {
-            yield return Helpers.GetWait(firstHitHitboxLifetime);
+            yield return Helpers.GetWait(attackScript.hitboxLifetime);
             if (swordCol.triggerEnabled == true)
             {
                 specialCol.ColliderOff();
@@ -493,7 +439,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
         }
         else if (state == PlayerStates.SAMURAI)
         {
-            yield return Helpers.GetWait(secondHitHitboxLifetime);
+            yield return Helpers.GetWait(attackScript.hitboxLifetime);
             if (swordCol.triggerEnabled == true)
             {
                 specialCol.ColliderOff();
@@ -562,7 +508,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
         yield return Helpers.GetWait(0.2f);
         GroundPoundQueueCheck();
         yield return Helpers.GetWait(0.2f);
-        if (control.IsQueuedAction(QueuedAction.SPECIAL) && stamina.HasStamina(initialStaminaCost))
+        if (control.IsQueuedAction(QueuedAction.SPECIAL) && stamina.HasStamina(attackScript.initialStaminaCost))
         {
             StartBaseballSamurai(PlayerStates.SAMURAI);
         }

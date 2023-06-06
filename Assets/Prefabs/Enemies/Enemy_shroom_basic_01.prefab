@@ -511,6 +511,10 @@ PrefabInstance:
       propertyPath: m_TagString
       value: Enemy
       objectReference: {fileID: 0}
+    - target: {fileID: -6021299167000518162, guid: 9d1ddd186a5ba154c9dfe46b0376b976, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 5dec62d4fc4249e49b4dd7314c37c6d5, type: 2}
     - target: {fileID: -5703399032122388290, guid: 9d1ddd186a5ba154c9dfe46b0376b976, type: 3}
       propertyPath: m_Layer
       value: 8
@@ -555,6 +559,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 2211151111382293002, guid: 9d1ddd186a5ba154c9dfe46b0376b976, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 5dec62d4fc4249e49b4dd7314c37c6d5, type: 2}
     - target: {fileID: 2742035017255423310, guid: 9d1ddd186a5ba154c9dfe46b0376b976, type: 3}
       propertyPath: m_Layer
       value: 8

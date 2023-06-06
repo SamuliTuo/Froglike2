@@ -17,6 +17,7 @@ public class PlayerInputQueue : MonoBehaviour
     private PlayerMouthController mouth;
     private TongueController tongue;
     private PlayerCrawl crouch;
+    private PlayerElementController elements;
 
 
     void Start()
@@ -31,6 +32,7 @@ public class PlayerInputQueue : MonoBehaviour
         mouth = GetComponent<PlayerMouthController>();
         tongue = GetComponent<TongueController>();
         crouch = GetComponent<PlayerCrawl>();
+        elements = GetComponentInChildren<PlayerElementController>();
     }
 
     public void InitQueuedAction()
@@ -39,7 +41,7 @@ public class PlayerInputQueue : MonoBehaviour
         {
             attack.InitAttack();
         }
-        else if (control.IsQueuedAction(QueuedAction.SPECIAL) && stamina.HasStamina(special.initialStaminaCost))
+        else if (control.IsQueuedAction(QueuedAction.SPECIAL) && stamina.HasStamina(special.attackScript.initialStaminaCost))
         {
             if (Random.Range(0, 2) == 0)
                 special.StartBaseballSamurai(PlayerStates.SAMURAI);
@@ -70,7 +72,7 @@ public class PlayerInputQueue : MonoBehaviour
         {
             crouch.InitCrawlOnStuckUnder();
         }
-        else if (control.IsQueuedAction(QueuedAction.NULL))        
+        else if (control.IsQueuedAction(QueuedAction.NULL))
         {
             control.ResetPlayer();
             control.state = PlayerStates.NORMAL;
@@ -109,4 +111,8 @@ public class PlayerInputQueue : MonoBehaviour
     {
         control.SetQueuedAction(QueuedAction.TONGUE);
     }
+
+    void OnChangeElementLast() => elements.ChangeElementLast();
+    void OnChangeElementNext() => elements.ChangeElementNext();
+    void OnApplyElementOnWeapon() => elements.ApplyElementOnWeapon();
 }

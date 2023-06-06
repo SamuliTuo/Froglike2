@@ -26,6 +26,12 @@ public class ProjectileController : MonoBehaviour
         objectsHit.Clear();
         brakesOn = true;
         StartCoroutine(LifeTime());
+
+        var fire = GetComponentInChildren<Projectile_Fire>();
+        if (fire != null)
+        {
+            fire.Init(rb);
+        }
     }
 
 

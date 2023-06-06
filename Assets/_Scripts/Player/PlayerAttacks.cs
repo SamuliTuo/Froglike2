@@ -18,6 +18,7 @@ public class PlayerAttacks : MonoBehaviour {
     [SerializeField] private float aimerRadius = 2;
     [SerializeField] private float aimerDistance = 2;
 
+    private WeaponBuffController weaponBuff;
     private PlayerController control;
     private PlayerGravity gravity;
     private PlayerSpecialAttack special;
@@ -45,6 +46,7 @@ public class PlayerAttacks : MonoBehaviour {
 
     void Start() {
         print("trying to do a NO STEP attack ova here!"); // rivillä 137 tarkemmin
+        weaponBuff = GetComponentInChildren<WeaponBuffController>();
         control = GetComponent<PlayerController>();
         gravity = GetComponent<PlayerGravity>();
         special = GetComponent<PlayerSpecialAttack>();
@@ -68,8 +70,8 @@ public class PlayerAttacks : MonoBehaviour {
         }
         else if (control.state == PlayerStates.ROLL) {
             if (colliders.TryToStandUp()) {
-                colliders.ChangeToStandUpColliders();
                 roll.StopRoll();
+                colliders.ChangeToStandUpColliders();
                 InitAttack(rollAttack);
             }
         }
@@ -92,7 +94,7 @@ public class PlayerAttacks : MonoBehaviour {
         nextAttack = null;
         control.ResetQueuedAction();
         SetAttSpdModifier();
-        attackHitEffects.SetActiveUpgrades(attackEffects.activeUpgrades);
+        attackHitEffects.SetActiveUpgrades(weaponBuff.activeBuff);
         if (attack.attackDuration == 0) {
             foreach (var clip in animStateList) {
                 if (clip.Key == attack.animatorStateName) {

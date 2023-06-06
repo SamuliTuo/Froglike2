@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: playerAttack_rose01
   m_EditorClassIdentifier: 
   attackType: 0
-  damage: 0.7
+  damage: 1.2
   useDamageDelay: 0
   damageDelay: 0
   damageInstanceIntervalMinMax: {x: 0, y: 0}
-  poiseDmg: 1
-  kbForce: 0.6
+  poiseDmg: 1.6
+  kbForce: 0.7
   animatorStateName: attack_rose01
-  manaRegenedPerHit: 1
+  manaRegenedPerHit: 0.05
   staminaRegenedPerHit: 0.3
   attackDuration: 0
   animationSpeed: 1.95

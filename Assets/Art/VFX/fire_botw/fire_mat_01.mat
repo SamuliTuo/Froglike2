@@ -108,10 +108,16 @@ Material:
     - _ZTestGBuffer: 3
     - _ZTestTransparent: 4
     - _ZWrite: 0
+    - _fireSeed: 762.851
+    - _movementAmount: 5
+    - _noiseAmount: 10
+    - _speed: 1.1399264
     - flameSeed: 0
     m_Colors:
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _direction: {r: 1, g: 1, b: 0, a: 0}
+    - _scale: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
 --- !u!114 &7289312825094108975
 MonoBehaviour:

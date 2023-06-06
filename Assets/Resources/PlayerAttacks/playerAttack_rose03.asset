@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: playerAttack_rose03
   m_EditorClassIdentifier: 
   attackType: 0
-  damage: 0.5
+  damage: 1.05
   useDamageDelay: 0
   damageDelay: 0
   damageInstanceIntervalMinMax: {x: 0, y: 0}
-  poiseDmg: 0.8
-  kbForce: 0.6
+  poiseDmg: 1.5
+  kbForce: 1
   animatorStateName: attack_rose03
   manaRegenedPerHit: 0.01
   staminaRegenedPerHit: 0.33
@@ -26,7 +26,7 @@ MonoBehaviour:
   animationSpeed: 2.1
   animationStartPerc: 0
   nextAttack: {fileID: 11400000, guid: cf6a00ce1ae782740a6db2cf94a1215d, type: 2}
-  nextAttackInitPerc: 0.342
+  nextAttackInitPerc: 0.455
   stepForce: 15
   stepDuration: 0.35
   attackHomingEndPerc: 0.3

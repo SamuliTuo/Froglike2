@@ -89,7 +89,8 @@ public class PlayerJumping : MonoBehaviour {
                 control.state == PlayerStates.ROLL_SLASH ||
                 control.state == PlayerStates.BASEBALL ||
                 control.state == PlayerStates.SAMURAI ||
-                control.state == PlayerStates.LONG_JUMP)
+                control.state == PlayerStates.LONG_JUMP ||
+                control.state == PlayerStates.MOUTH)
             {
                 return;
             }
@@ -173,29 +174,28 @@ public class PlayerJumping : MonoBehaviour {
     }
 
     public void WallJump() {
+        
         jumpSpeed = Mathf.Sqrt(-2f * Physics.gravity.y * jumpHeight);
         currentJump = JumpType.WALL;
         anim.Play("jump", 0, 0);
         //_anim.StraightToJumpAnimation();
         Vector3 wallNormal = new Vector3(control.steepNormal.x, 0, control.steepNormal.z).normalized;
-        //Vector3 newDir = wallNormal;
-        //Vector3 inputDir = control.GetInput();
+        Vector3 newDir = wallNormal;// new Vector3(wallNormal.x * wallJumpHorizontalMult, wallNormal.y, wallNormal.z * wallJumpHorizontalMult) + Vector3.up * wallJumpVerticalMult;
+        Vector3 inputDir = control.GetInput();
         upgrades.WalljumpUpgrades(control.steepNormal, control.contactPoint);
-        Vector3 newDir = Vector3.RotateTowards(wallNormal, Vector3.up, 1.16937f, 0);
-        newDir.y *= wallJumpVerticalMult;
-        newDir.x *= wallJumpHorizontalMult;
-        newDir.z *= wallJumpHorizontalMult;
-        ActivateWallJump(newDir);
-        /*
+        //ActivateWallJump(newDir);
+        
+        
 
         // Rotate jumpDir towards input:
         if (inputDir.sqrMagnitude > 0.2f * 0.2f) {
 
             // Upwards walljump
             var dot = Vector3.Dot(wallNormal, inputDir.normalized);
-            if (dot < -0.97f) {
-                newDir = Vector3.RotateTowards(
-                    wallNormal, Vector3.up, 1.16937f, 0) * upwardsWallJumpHeight;
+            if (dot < -0.9f) {
+                newDir = new Vector3(newDir.x * wallJumpHorizontalMult, newDir.y, newDir.z * wallJumpHorizontalMult) + Vector3.up * wallJumpVerticalMult;
+                //newDir = Vector3.RotateTowards(
+                    //wallNormal, Vector3.up, 1.16937f, 0);
                 ActivateWallJump(newDir);
                 return;
             }
@@ -206,8 +206,9 @@ public class PlayerJumping : MonoBehaviour {
                 // Upwards-diagonal walljump
                 if (dot < -0.7f) {
                     newDir = Vector3.RotateTowards(
-                        wallNormal, Vector3.up, 1.16937f, 0) * upwardsWallJumpHeight;
+                        wallNormal, Vector3.up, 1.16937f, 0);
                     newDir = Quaternion.Euler(0, 45 * leftOrRightOfNormal, 0) * newDir;
+                    newDir = new Vector3(newDir.x * wallJumpHorizontalMult, newDir.y * wallJumpVerticalMult, newDir.z * wallJumpHorizontalMult);
                     ActivateWallJump(newDir);
                     return;
                 }
@@ -220,16 +221,16 @@ public class PlayerJumping : MonoBehaviour {
         // Rotate dir from velocity when no input:
         else {
             Vector3 velo = new Vector3(control.GetVelocity().x, 0, control.GetVelocity().z);
-            if (velo.sqrMagnitude > 3f * 3f) {
-                Vector3 crossProd = Vector3.Cross(wallNormal, velo.normalized);
-                float leftOrRightOfNormal = Vector3.Dot(crossProd, Vector3.up);
-                newDir = Quaternion.AngleAxis(
-                    (wallJumpMinimumAngle * 0.6f) * leftOrRightOfNormal, Vector3.up) * wallNormal;
-            }
+            Vector3 crossProd = Vector3.Cross(wallNormal, velo.normalized);
+            float leftOrRightOfNormal = Vector3.Dot(crossProd, Vector3.up);
+            newDir = Quaternion.AngleAxis(
+                (wallJumpMinimumAngle * 0.6f) * leftOrRightOfNormal, Vector3.up) * wallNormal;
         }
-        var dir = (newDir * wallJumpHorizontalMult + Vector3.up * wallJumpVerticalMult) * jumpSpeed;
-        ActivateWallJump(dir);
-        */
+        //newDir = Vector3.RotateTowards(newDir, Vector3.up, 1.16937f, 0);
+        newDir = new Vector3(newDir.x * wallJumpHorizontalMult, newDir.y, newDir.z * wallJumpHorizontalMult) + Vector3.up * wallJumpVerticalMult;
+        var dir = (newDir * wallJumpHorizontalMult + Vector3.up * wallJumpVerticalMult);
+        ActivateWallJump(newDir);
+        
     }
 
     public void ActivateWallJump(Vector3 dir) {
