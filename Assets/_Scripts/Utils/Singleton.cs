@@ -15,12 +15,14 @@ public class Singleton : MonoBehaviour {
     public GameEvents GameEvents { get; private set; }
     public CameraChanger CameraChanger { get; private set; }
     public VFXManager VFXManager { get; private set; }
+    public ParticleEffects ParticleEffects { get; private set; }
     //public SFXManager SFXManager { get; private set; }
 
     public PlayerHurt PlayerHurt { get; private set; }
     public PlayerMana PlayerMana { get; private set; }
     public PlayerStamina PlayerStamina { get; private set; }
     public PlayerAbilityUpgrader PlayerUpgradeHolder { get; private set; }
+    public AimingArrows AimingArrows { get; private set; }
 
     void Awake() {
         if (instance != null && instance != this)
@@ -42,6 +44,8 @@ public class Singleton : MonoBehaviour {
         GameEvents = GetComponentInChildren<GameEvents>();
         CameraChanger = GetComponent<CameraChanger>();
         VFXManager = GetComponentInChildren<VFXManager>();
+        ParticleEffects = GetComponentInChildren<ParticleEffects>();
+        AimingArrows = GetComponentInChildren<AimingArrows>();
         //SFXManager = GetComponentInChildren<SFXManager>();
     }
     public void SetPlayerScripts() {

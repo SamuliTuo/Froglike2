@@ -2,7 +2,7 @@ using UnityEngine;
 
 [CreateAssetMenu(menuName = "Scriptable Objects/PlayerAttack")]
 public class PlayerAttackScriptable : ScriptableObject {
-
+    
     public NumberType attackType = NumberType.normal;
     public float damage = 1;
     public bool useDamageDelay = false;
@@ -35,6 +35,8 @@ public class PlayerAttackScriptable : ScriptableObject {
     [Header("No target")]
     [Tooltip("How fast will the player take a step.")]
     public float stepForce = 0;
+    public float stepEndForce = 0;
+    public float stepForceUp = 0;
 
     [Tooltip("How long will the step take.")]
     public float stepDuration = 0;

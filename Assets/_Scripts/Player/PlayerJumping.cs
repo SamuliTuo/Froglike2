@@ -1,9 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public enum JumpType { NULL, NORMAL, AIR, WALL, ROLL }
+public enum JumpType { NULL, NORMAL, AIR, WALL, ROLL, ROLL_WALL }
 
 public class PlayerJumping : MonoBehaviour {
 
@@ -18,16 +19,22 @@ public class PlayerJumping : MonoBehaviour {
     [SerializeField] private int maxEarlyJumpTimeSteps = 12;
     [Space]
     [SerializeField] private float normalJump_moveSpdReduct = 1f;
+    [SerializeField] private float rollJump_moveSpdMult = 1.5f;
     [SerializeField] private float jumpHeight = 4f;
     [SerializeField] private float runHeightMultiplier = 1.2f;
     [SerializeField] private float groundPoundHeightMultiplier = 1.3f;
     [Header("Walljump")]
+    [SerializeField] private int wallJumpCoyoteFrames = 10;
     [SerializeField] private float wallJumpHorizontalMult = 0.9f;
     [SerializeField] private float wallJumpMinimumAngle = 66f;
     [SerializeField] private float wallJumpVerticalMult = 0.7f; 
     [SerializeField] private float upwardsWallJumpHeight = 11f;
     [SerializeField] private float accelModTimeOnWalljump = 1.3f;
+    [SerializeField] private float accelModTimeOnRollingWalljump = 0.6f;
     [SerializeField] private float wallJumpRotationAlignDuration = 1f;
+    [Header("RollWallJump")]
+    [SerializeField] private float rollWallJumpMinimumAngle = 66f;
+    [SerializeField] private float wallRollJump_moveSpdReduct = 0.9f;
     [Header("Airjump")]
     [SerializeField] private float airJumpHorizForce = 70;
     [SerializeField] private float airJumpVertiForce = 40f;
@@ -40,6 +47,7 @@ public class PlayerJumping : MonoBehaviour {
     private PlayerGravity gravity;
     private PlayerLongJump longJump;
     private PlayerRunning run;
+    private PlayerRolling rolling;
     private PlayerJumpingUpgrades upgrades;
     private PlayerRotate rotate;
     private Animator anim;
@@ -57,6 +65,7 @@ public class PlayerJumping : MonoBehaviour {
         gravity = GetComponent<PlayerGravity>();
         longJump = GetComponent<PlayerLongJump>();
         run = GetComponent<PlayerRunning>();
+        rolling = GetComponent<PlayerRolling>();
         upgrades = GetComponentInChildren<PlayerJumpingUpgrades>();
         rotate = GetComponentInChildren<PlayerRotate>();
         anim = GetComponentInChildren<Animator>();
@@ -97,6 +106,7 @@ public class PlayerJumping : MonoBehaviour {
             ChooseJump();
         }
     }
+    
 
     public void ChooseJump() {
         control.StopAfterSpecialGravity();
@@ -106,6 +116,10 @@ public class PlayerJumping : MonoBehaviour {
                 RollJump();
                 //longJump.LongJump();
             }
+            else if (playerCanJump && control.PlayerOnSteep || control.playerOnSlippery || control.stepsSinceLastSteep <= wallJumpCoyoteFrames)
+            {
+                RollWallJump();
+            }
         }
         else if (control.PlayerGrounded || 
             (earlyJumpPressTimer > 0 && control.PlayerGrounded) ||
@@ -113,7 +127,9 @@ public class PlayerJumping : MonoBehaviour {
         {
             NormalJump();
         }
-        else if (control.PlayerOnSteep) {
+        else if (control.PlayerOnSteep || control.stepsSinceLastSteep <= wallJumpCoyoteFrames)
+        {
+            print("walljumping");
             WallJump();
         }
         else if (!airJumpUsed) {
@@ -129,6 +145,7 @@ public class PlayerJumping : MonoBehaviour {
     }
 
     void GroundPoundJump() {
+        Singleton.instance.ParticleEffects.SpawnSmoke(transform.position + Vector3.down, Vector3.up);
         upgrades.JumpUpgrades();
         control.SetVelocity(Vector3.up * jumpSpeed * groundPoundHeightMultiplier);
         anim.Play("jump", 0, 0);
@@ -140,6 +157,7 @@ public class PlayerJumping : MonoBehaviour {
     void NormalJump() {
         currentJump = JumpType.NORMAL;
         normalJumpQueued = false;
+        Singleton.instance.ParticleEffects.SpawnSmoke(transform.position + Vector3.down, Vector3.up);
         Vector3 jumpDir = Vector3.up;
         var velo = control.GetVelocity();
         float alignedSpeedDot = Vector3.Dot(new Vector3(velo.x, 0, velo.z), jumpDir);
@@ -150,21 +168,22 @@ public class PlayerJumping : MonoBehaviour {
         control.SetVelocity(
             new Vector3(velo.x * normalJump_moveSpdReduct, 0, velo.z * normalJump_moveSpdReduct) +
             (jumpDir * jumpSpeed * Mathf.Max(1, run.runMultiplier * runHeightMultiplier)));
-        //particles
         //audio
         anim.Play("jump", 0, 0);
         StartJumpBrakes();
         StartCoroutine(JustJumped());
     }
 
+    public float rollJumpHeightMultiplier = 0.75f;
     void RollJump() {
         currentJump = JumpType.ROLL;
-        jumpSpeed *= 0.75f;
+        jumpSpeed *= rollJumpHeightMultiplier;
+        Singleton.instance.ParticleEffects.SpawnSmoke(transform.position + Vector3.down, Vector3.up);
         Vector3 jumpDir = Vector3.up;
         var velo = control.GetVelocity();
         float alignSpeedDot = Vector3.Dot(new Vector3(velo.x, 0, velo.z), jumpDir);
         if (alignSpeedDot > 0f) {
-            jumpSpeed = Mathf.Max(jumpSpeed - alignSpeedDot, 0f);
+            //jumpSpeed = Mathf.Max(jumpSpeed - alignSpeedDot, 0f);
         }
         control.SetVelocity(
             new Vector3(velo.x * normalJump_moveSpdReduct, 0, velo.z * normalJump_moveSpdReduct) + 
@@ -174,12 +193,15 @@ public class PlayerJumping : MonoBehaviour {
     }
 
     public void WallJump() {
-        
+
+        control.stepsSinceLastSteep = wallJumpCoyoteFrames;
         jumpSpeed = Mathf.Sqrt(-2f * Physics.gravity.y * jumpHeight);
         currentJump = JumpType.WALL;
         anim.Play("jump", 0, 0);
+        var point = control.contactPoint == null ? transform.position : control.contactPoint;
+        Singleton.instance.ParticleEffects.SpawnSmoke(point, control.lastSteepNormal);
         //_anim.StraightToJumpAnimation();
-        Vector3 wallNormal = new Vector3(control.steepNormal.x, 0, control.steepNormal.z).normalized;
+        Vector3 wallNormal = new Vector3(control.lastSteepNormal.x, 0, control.lastSteepNormal.z).normalized;
         Vector3 newDir = wallNormal;// new Vector3(wallNormal.x * wallJumpHorizontalMult, wallNormal.y, wallNormal.z * wallJumpHorizontalMult) + Vector3.up * wallJumpVerticalMult;
         Vector3 inputDir = control.GetInput();
         upgrades.WalljumpUpgrades(control.steepNormal, control.contactPoint);
@@ -220,20 +242,20 @@ public class PlayerJumping : MonoBehaviour {
         }
         // Rotate dir from velocity when no input:
         else {
-            Vector3 velo = new Vector3(control.GetVelocity().x, 0, control.GetVelocity().z);
-            Vector3 crossProd = Vector3.Cross(wallNormal, velo.normalized);
+            Vector3 crossProd = Vector3.Cross(wallNormal, new(control.GetVelocity().x, 0, control.GetVelocity().z));
             float leftOrRightOfNormal = Vector3.Dot(crossProd, Vector3.up);
             newDir = Quaternion.AngleAxis(
                 (wallJumpMinimumAngle * 0.6f) * leftOrRightOfNormal, Vector3.up) * wallNormal;
         }
+        //var dir = (newDir * wallJumpHorizontalMult + Vector3.up * wallJumpVerticalMult);
         //newDir = Vector3.RotateTowards(newDir, Vector3.up, 1.16937f, 0);
         newDir = new Vector3(newDir.x * wallJumpHorizontalMult, newDir.y, newDir.z * wallJumpHorizontalMult) + Vector3.up * wallJumpVerticalMult;
-        var dir = (newDir * wallJumpHorizontalMult + Vector3.up * wallJumpVerticalMult);
         ActivateWallJump(newDir);
-        
     }
 
-    public void ActivateWallJump(Vector3 dir) {
+    public void ActivateWallJump(Vector3 dir)
+    {
+        Singleton.instance.ParticleEffects.SpawnSmoke(control.contactPoint, control.lastSteepNormal);
         StartJumpBrakes();
         StartCoroutine(JustJumped());
         control.SetVelocity(dir);
@@ -242,8 +264,104 @@ public class PlayerJumping : MonoBehaviour {
         control.InitAccelerationModReturn(accelModTimeOnWalljump, true);
     }
 
+    // Rolling walljump
+    public void RollWallJump()
+    {
+        control.stepsSinceLastSteep = wallJumpCoyoteFrames;
+        jumpSpeed = Mathf.Sqrt(-2f * Physics.gravity.y * jumpHeight);
+        currentJump = JumpType.ROLL_WALL;
+
+        //anim.Play("jump", 0, 0);
+        //_anim.StraightToJumpAnimation();
+        Vector3 point = control.contactPoint == null ? transform.position : control.contactPoint;
+        Singleton.instance.ParticleEffects.SpawnSmoke(point, control.lastSteepNormal);
+        Vector3 wallNormal = new Vector3(control.lastSteepNormal.x, 0, control.lastSteepNormal.z).normalized;
+        Vector3 newDir = wallNormal;// new Vector3(wallNormal.x * wallJumpHorizontalMult, wallNormal.y, wallNormal.z * wallJumpHorizontalMult) + Vector3.up * wallJumpVerticalMult;
+        Vector3 inputDir = control.GetInput();
+        upgrades.WalljumpUpgrades(control.steepNormal, control.contactPoint);
+        //ActivateWallJump(newDir);
+
+
+
+        // Rotate jumpDir towards input:
+        if (inputDir.sqrMagnitude > 0.2f * 0.2f)
+        {
+            // Upwards walljump
+            var dot = Vector3.Dot(wallNormal, inputDir.normalized);
+            if (dot < -0.9f)
+            {
+                newDir = new Vector3(newDir.x * wallJumpHorizontalMult, newDir.y, newDir.z * wallJumpHorizontalMult) + Vector3.up * wallJumpVerticalMult;
+                //newDir = Vector3.RotateTowards(
+                //wallNormal, Vector3.up, 1.16937f, 0);
+                ActivateWallJump(newDir);
+                return;
+            }
+            else
+            {
+                Vector3 crossProd = Vector3.Cross(wallNormal, inputDir.normalized);
+                float leftOrRightOfNormal = Vector3.Dot(crossProd, Vector3.up);
+
+                // Upwards-diagonal walljump
+                if (dot < -0.7f)
+                {
+                    newDir = Vector3.RotateTowards(
+                        wallNormal, Vector3.up, 1.16937f, 0);
+                    newDir = Quaternion.Euler(0, 45 * leftOrRightOfNormal, 0) * newDir;
+                    newDir = new Vector3(newDir.x * wallJumpHorizontalMult, newDir.y * wallJumpVerticalMult, newDir.z * wallJumpHorizontalMult);
+                    ActivateWallJump(newDir);
+                    return;
+                }
+                else
+                {
+                    newDir = Quaternion.AngleAxis(
+                        rollWallJumpMinimumAngle * leftOrRightOfNormal, Vector3.up) * wallNormal;
+                }
+            }
+        }
+        // Rotate dir from velocity when no input:
+        else
+        {
+            Vector3 crossProd = Vector3.Cross(wallNormal, new(rolling.rollDir.x, 0, rolling.rollDir.z));
+            float leftOrRightOfNormal = Vector3.Dot(crossProd, Vector3.up);
+            newDir = Quaternion.AngleAxis(
+                (rollWallJumpMinimumAngle * 0.6f) * leftOrRightOfNormal, Vector3.up) * wallNormal;
+        }
+        //var dir = (newDir * wallJumpHorizontalMult + Vector3.up * wallJumpVerticalMult);
+        //newDir = Vector3.RotateTowards(newDir, Vector3.up, 1.16937f, 0);
+        newDir = new Vector3(newDir.x * wallJumpHorizontalMult, newDir.y, newDir.z * wallJumpHorizontalMult).normalized;
+        ActivateRollWallJump(newDir);
+    }
+
+    public void ActivateRollWallJump(Vector3 dir)
+    {
+        dir = Vector3.Normalize(new(dir.x, 0, dir.z));
+        rolling.rollDir = dir;
+        graphics.rotation = Quaternion.LookRotation(dir, Vector3.up);
+
+        //jumpSpeed *= 0.75f;
+        Vector3 jumpDir = Vector3.up;
+        var velo = control.GetVelocity().magnitude;
+        //float alignSpeedDot = Vector3.Dot(new Vector3(velo.x, 0, velo.z), jumpDir);
+        //if (alignSpeedDot > 0f)
+        //{
+        //    jumpSpeed = Mathf.Max(jumpSpeed - alignSpeedDot, 0f);
+        //}
+        control.SetVelocity(
+            new Vector3(dir.x * wallRollJump_moveSpdReduct * velo, 0, dir.z * wallRollJump_moveSpdReduct * velo) +
+            (jumpDir * jumpSpeed));
+
+        print("activating rollwallj "+Time.time);
+
+        control.InitAccelerationModReturn(accelModTimeOnRollingWalljump, true);
+
+        //StartJumpBrakes();
+        StartCoroutine(JustJumped());
+        StartJumpBrakes();
+    }
+
     public void InitAirJump() {
         anim.Play("airDash_upwards", 0, 0);
+        Singleton.instance.ParticleEffects.SpawnSmoke(transform.position + Vector3.down, Vector3.down);
         if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
         {
             graphics.rotation = Quaternion.LookRotation(control.GetInput(), Vector3.up);
@@ -261,8 +379,9 @@ public class PlayerJumping : MonoBehaviour {
         }*/
         //rotate.AlignToVelocityForTime(airJumpRotationAlignDuration);
 
-        rb.velocity = control.GetInput() * 8 + Vector3.up * airJumpVertiForce;
-        control.SetVelocity(control.GetInput() * 8 + Vector3.up * airJumpVertiForce);
+        var force = control.GetInput() * airJumpHorizForce + Vector3.up * airJumpVertiForce;
+        rb.velocity = force;
+        control.SetVelocity(force);
         /*control.SetVelocity(Vector3.zero);
         rb.velocity = Vector3.zero;
         rb.AddForce(force, ForceMode.Impulse);*/

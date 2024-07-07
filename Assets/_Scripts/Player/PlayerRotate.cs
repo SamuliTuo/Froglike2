@@ -21,7 +21,9 @@ public class PlayerRotate : MonoBehaviour {
     }
 
     public void RotatePlayer() {
-        if (control.state == PlayerStates.ROLL) {
+        if (control.state == PlayerStates.ROLL && 
+            new Vector3(rb.velocity.x, 0, rb.velocity.z).sqrMagnitude > 0.1f) 
+        {
             transform.rotation = Quaternion.RotateTowards(
                     transform.rotation,
                     Quaternion.LookRotation(

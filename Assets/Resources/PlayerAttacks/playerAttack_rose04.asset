@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: playerAttack_rose04
   m_EditorClassIdentifier: 
   attackType: 1
-  damage: 2.5
+  damage: 4
   useDamageDelay: 0
   damageDelay: 0
   damageInstanceIntervalMinMax: {x: 0, y: 0}

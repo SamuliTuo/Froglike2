@@ -14,24 +14,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attackElement: 0
   damageNumberType: 0
-  damageMinMax: {x: 1.2, y: 1.5}
+  damageMinMax: {x: 1.45, y: 1.66}
   critMultiplier: 1.5
   useDamageDelay: 1
-  damageDelayMinMax: {x: 0.05, y: 0.4}
-  damageInstanceIntervalMinMax: {x: 0.005, y: 0.03}
+  damageDelayMinMax: {x: 0, y: 0.4}
+  damageInstanceIntervalMinMax: {x: 0.1, y: 0.01}
   poiseDmgMinMax: {x: 2, y: 5}
-  kbForceMinMax: {x: 0, y: 5}
+  kbForceMinMax: {x: 0.5, y: 5}
   animatorStateName: 
   manaRegenedPerHitMinMax: {x: 0.01, y: 0.05}
   staminaRegenedPerHitMinMax: {x: 0.02, y: 0.05}
   timeInvulnerableMinMax: {x: 0.25, y: 0.33}
-  maxChargeDuration: 0.9
+  maxChargeDuration: 0.5
   initialStaminaCost: 0.31
-  chargingStaminaCost: 0.7
+  chargingStaminaCost: 1
   timeBeforeChargeStarts: 0.2
-  timeScalePercMinMax: {x: 0.15, y: 0.8}
-  stepForceMinMax: {x: 450, y: 1250}
-  maxChargeRotationMult: 0.5
+  timeScalePercMinMax: {x: 0.1, y: 0.6}
+  stepForceMinMax: {x: 500, y: 1100}
+  maxChargeRotationMult: 1
   hitDurationMinMax: {x: 0.4, y: 0.7}
   hitboxLifetime: 0.5
   animationSpeed: 1

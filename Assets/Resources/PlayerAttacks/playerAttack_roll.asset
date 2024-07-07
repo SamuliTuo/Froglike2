@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3616dc95a153b6141bf75eb6af689121, type: 3}
+  m_Name: playerAttack_roll
+  m_EditorClassIdentifier: 
+  attackType: 0
+  damage: 2
+  useDamageDelay: 0
+  damageDelay: 0
+  damageInstanceIntervalMinMax: {x: 0, y: 0}
+  poiseDmg: 1.5
+  kbForce: 1
+  animatorStateName: attack_rose02
+  manaRegenedPerHit: 0.01
+  staminaRegenedPerHit: 0.33
+  attackDuration: 0.25
+  animationSpeed: 1.5
+  animationStartPerc: 0
+  nextAttack: {fileID: 11400000, guid: 580b7c7f611a8634694644138ca01d4f, type: 2}
+  nextAttackInitPerc: 0.752
+  stepForce: 80
+  stepEndForce: 30
+  stepForceUp: 20
+  stepDuration: 0.05
+  attackHomingEndPerc: 0.3
+  moveReturnPerc: 0.646
+  moveReturnDuration: 0.25
+  rotReturnPerc: 0.791
+  rotReturnDuration: 0.25
+  weaponColActivatePerc: 0.1
+  weaponColDeactivatePerc: 0.641
+  width: 0.9
+  length: 1.3
+  growSpeed: 3
+  flySpeed: 2.5
+  lifeTime: 0.13
+  spawnDelay: 0.16
+  spawnOffset: {x: 0, y: 1.5, z: 1.4}
+  rotation: {x: 0, y: 0, z: -8}

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,6 +8,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
 
     public PlayerSpecialScriptable attackScript = null;
     [HideInInspector] public bool hijackControls = false;
+    public float transitionToSpecialSpeed = 0.15f;
 
     [Header("Ground Pound")]
     [SerializeField] private float groundPoundInitialStopDuration = 0.4f;
@@ -93,7 +95,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
         }
         else if (control.state == PlayerStates.ROLL || (control.state == PlayerStates.NORMAL && control.stepsSinceLastGrounded >= 3))
         {
-            roll.StopRoll();
+            roll.StopRoll(true);
             StartBaseballSamurai(PlayerStates.SAMURAI);
         }
     }
@@ -123,18 +125,35 @@ public class PlayerSpecialAttack : MonoBehaviour {
     }
 
     // Baseball Samurai ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    public float aimingArrow_offsetUp = 1;
     public void StartBaseballSamurai(PlayerStates state)
     {
+        targetDir = attack.AimAndChooseTarget(
+                2.1f + Mathf.Clamp(0.01f * 1.8f, 1, attackScript.maxChargeDuration),
+                1.7f + Mathf.Clamp(0.01f * 1.8f, 1, attackScript.maxChargeDuration));
+        
         control.ResetQueuedAction();
         stamina.TryDrainStamina(attackScript.initialStaminaCost);
         StopAllCoroutines();
         gravity.StopAfterSpecialGrav();
         applyStartForce = true;
         control.state = state;
+
+        Singleton.instance.AimingArrows.ActivateArrow(
+            transform.position + Vector3.up * aimingArrow_offsetUp,
+            transform.position + Vector3.up * aimingArrow_offsetUp + targetDir,
+            transform,
+            attackScript
+            );
+
         if (state == PlayerStates.BASEBALL)
-            anim.CrossFade("attack_special_baseballCharge", 0.4f, 0);
+        {
+            anim.CrossFade("attack_special_baseballCharge", transitionToSpecialSpeed, 0);
+        }
         else if (state == PlayerStates.SAMURAI)
-            anim.CrossFade("attack_special_samuraiCharge", 0.4f, 0);
+        {
+            anim.CrossFade("attack_special_samuraiCharge", transitionToSpecialSpeed, 0);
+        }
 
         takeStep = takeAimedStep = false;
         t = currentCharge = -attackScript.timeBeforeChargeStarts;
@@ -147,21 +166,40 @@ public class PlayerSpecialAttack : MonoBehaviour {
     }
 
     private float forceT;
+    private float damageT;
     private float forcePerc;
     IEnumerator BaseballSamurai(PlayerStates state)
     {
         // CHARGE
         perc = 0;
+        targetDir = attack.AimAndChooseTarget(
+            2.1f + Mathf.Clamp(perc * 1.8f, 1, attackScript.maxChargeDuration),
+            1.7f + Mathf.Clamp(perc * 1.8f, 1, attackScript.maxChargeDuration));
+        Singleton.instance.AimingArrows.UpdateArrow(
+            transform.position + Vector3.up * aimingArrow_offsetUp,
+            transform.position + Vector3.up * aimingArrow_offsetUp + targetDir,
+            forcePerc);
+
         while (buttonHeld && currentCharge < attackScript.maxChargeDuration)
         {
             if (currentCharge >= 0)
             {
+                forceT += Time.unscaledDeltaTime;
                 if (stamina.TryDrainStamina(attackScript.chargingStaminaCost * (1 - perc) * Time.unscaledDeltaTime))
                 {
-                    forceT += Time.unscaledDeltaTime;
+                    damageT += Time.unscaledDeltaTime;
                     forcePerc = forceT / attackScript.maxChargeDuration;
                 }
             }
+
+            targetDir = attack.AimAndChooseTarget(
+                2.1f + Mathf.Clamp(perc * 1.8f, 1, attackScript.maxChargeDuration),
+                1.7f + Mathf.Clamp(perc * 1.8f, 1, attackScript.maxChargeDuration));
+            Singleton.instance.AimingArrows.UpdateArrow(
+                transform.position + Vector3.up * aimingArrow_offsetUp,
+                transform.position + Vector3.up * aimingArrow_offsetUp + targetDir,
+                forcePerc);
+
             charging = true;
             RotateWhileCharging();
             currentCharge += Time.unscaledDeltaTime;
@@ -172,6 +210,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
             LerpCameraDistance(); /////////////////?????????????? <<<<<<<<<< tätä ei oo tehty viel ollenkaan, lerppaa kamera vähän sisään ladatessa? jotai efektii
             yield return null;
         }
+
         // ATTAKC
         perc = currentCharge / attackScript.maxChargeDuration;
         colliders.ChangeToSmallCollider();
@@ -186,8 +225,8 @@ public class PlayerSpecialAttack : MonoBehaviour {
             model.rotation = Quaternion.LookRotation(new(targetDir.x, 0, targetDir.z));
         }
         currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(attackScript, model, perc);
-            
 
+        Singleton.instance.AimingArrows.DeactivateArrow();
         specialCol.ColliderOn(currentAttackInstance);
         swordCol.ColliderOn(currentAttackInstance);
         StartCoroutine(TurnHitboxesOffWithDelay(state));
@@ -199,6 +238,7 @@ public class PlayerSpecialAttack : MonoBehaviour {
         Time.timeScale = 1;
         IgnoreNearbyEnemies(true);
         rotate.SetRotateSpdMod(0);
+
         if (state == PlayerStates.BASEBALL)
             anim.Play("attack_special_baseballSwing", 0, 0);
         else if (state == PlayerStates.SAMURAI)
@@ -274,8 +314,8 @@ public class PlayerSpecialAttack : MonoBehaviour {
     }
 
 
-    public Vector3 BaseballSamuraiMovement(
-        Vector3 xAxis, float currX, Vector3 zAxis, float currZ)
+    public Vector3 BaseballSamuraiMovement()
+        //Vector3 xAxis, float currX, Vector3 zAxis, float currZ)
     {
         if (takeStep) 
         {
@@ -310,46 +350,47 @@ public class PlayerSpecialAttack : MonoBehaviour {
     void Step()
     {
         Vector3 force = Vector3.zero;
-        if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
-        {
-            model.rotation = Quaternion.LookRotation(control.GetInput());
-        }
-        
-        Vector2 playerInput;
-        playerInput.x = Mathf.Abs(control.xAxis) > control.deadzone ? control.xAxis : 0;
-        playerInput.y = Mathf.Abs(control.yAxis) > control.deadzone ? control.yAxis : 0;
-        playerInput = playerInput.normalized; // Vector2.ClampMagnitude(playerInput, 1f);
-        Transform inputSpace = control.GetPlrInputSpace();
+        //if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
+        //{
+        //    model.rotation = Quaternion.LookRotation(control.GetInput());
+        //}
 
-        if (inputSpace)
-        {
-            Vector3 inputSpaceForward = inputSpace.forward;
-            if (inputSpace.forward.y < 0)
-            {
-                if (control.PlayerGrounded)
-                {
-                    inputSpaceForward.y = 0;
-                    inputSpaceForward = inputSpaceForward.normalized;
-                }
-                else
-                {
-                    perc = Mathf.Sin(perc * Mathf.PI * 0.5f);
-                    inputSpaceForward.y *= perc;
-                    inputSpaceForward = inputSpaceForward.normalized;
-                }
-            }
-            if (control.PlayerGrounded == false && control.GetInput().sqrMagnitude < control.deadzoneSquared)
-                force += model.forward * Mathf.Lerp(attackScript.stepForceMinMax.x, attackScript.stepForceMinMax.y, forcePerc);
-            else
-                force += (inputSpaceForward * playerInput.y + inputSpace.right * playerInput.x).normalized *
-                        Mathf.Lerp(attackScript.stepForceMinMax.x, attackScript.stepForceMinMax.y, forcePerc);            
-        }
-        else
-        {
-            force += (model.forward * playerInput.y + model.right * playerInput.x) *
-                Mathf.Lerp(attackScript.stepForceMinMax.x, attackScript.stepForceMinMax.y, forcePerc);
-        }
-        rb.AddForce(force, ForceMode.Impulse);
+        //Vector2 playerInput;
+        //playerInput.x = Mathf.Abs(control.xAxis) > control.deadzone ? control.xAxis : 0;
+        //playerInput.y = Mathf.Abs(control.yAxis) > control.deadzone ? control.yAxis : 0;
+        //playerInput = playerInput.normalized; // Vector2.ClampMagnitude(playerInput, 1f);
+        //Transform inputSpace = control.GetPlrInputSpace();
+
+        //if (inputSpace)
+        //{
+        //    Vector3 inputSpaceForward = inputSpace.forward;
+        //    if (inputSpace.forward.y < 0)
+        //    {
+        //        if (control.PlayerGrounded)
+        //        {
+        //            inputSpaceForward.y = 0;
+        //            inputSpaceForward = inputSpaceForward.normalized;
+        //        }
+        //        else
+        //        {
+        //            perc = Mathf.Sin(perc * Mathf.PI * 0.5f);
+        //            inputSpaceForward.y *= perc;
+        //            inputSpaceForward = inputSpaceForward.normalized;
+        //        }
+        //    }
+        //    if (control.PlayerGrounded == false && control.GetInput().sqrMagnitude < control.deadzoneSquared)
+        //        force += model.forward * Mathf.Lerp(attackScript.stepForceMinMax.x, attackScript.stepForceMinMax.y, forcePerc);
+        //    else
+        //        force += (inputSpaceForward * playerInput.y + inputSpace.right * playerInput.x).normalized *
+        //                Mathf.Lerp(attackScript.stepForceMinMax.x, attackScript.stepForceMinMax.y, forcePerc);            
+        //}
+        //else
+        //{
+        //    force += (model.forward * playerInput.y + model.right * playerInput.x) *
+        //        Mathf.Lerp(attackScript.stepForceMinMax.x, attackScript.stepForceMinMax.y, forcePerc);
+        //}
+        model.rotation = Quaternion.LookRotation(Singleton.instance.AimingArrows.force.normalized);
+        rb.AddForce(Singleton.instance.AimingArrows.force, ForceMode.Impulse);
         takeStep = takeAimedStep = false;
     }
 

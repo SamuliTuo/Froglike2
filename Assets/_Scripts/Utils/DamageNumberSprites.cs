@@ -28,7 +28,7 @@ public class DamageNumberSprites : MonoBehaviour
     public Texture2D GetTextureFromChar(char letter, NumberType type)
     {
         Texture2D tex;
-        if (letter.ToString() == ",")
+        if (letter.ToString() == ".")
             tex = FindTextureByType("point", type);
         else
             tex = FindTextureByType(letter.ToString(), type);

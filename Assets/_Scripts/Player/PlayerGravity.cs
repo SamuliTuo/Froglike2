@@ -1,16 +1,20 @@
 using UnityEngine;
 using System.Collections;
 using UnityEngine.InputSystem;
+using Palmmedia.ReportGenerator.Core.Reporting.Builders;
 
 public class PlayerGravity : MonoBehaviour {
 
     [HideInInspector] public bool jumpPressed = false;
-    [HideInInspector] public float afterJumpExtraGrav = 0;
+    public float afterJumpExtraGrav = 0;
     [HideInInspector] public Coroutine apexGravCoroutine = null;
     [HideInInspector] public Coroutine brakeCoroutine = null;
 
     [SerializeField] private float fallGravMult = 2.2f - 1;
+    [SerializeField] private float continuousRollFallGravMult = 4f;
     [SerializeField] private float lowJumpGravMult = 2.6f - 1;
+    
+    [SerializeField] private float wallGravMult = 3 - 1;
     [SerializeField] private float apexGravTimer = 0.3f;
 
     [Header("Extra gravity after jump")]
@@ -19,6 +23,7 @@ public class PlayerGravity : MonoBehaviour {
 
     private Rigidbody rb;
     private PlayerController control;
+    private PlayerInput input;
     private PlayerJumping jump;
     private PlayerAttacks attack;
     private PlayerSpecialAttack special;
@@ -29,6 +34,7 @@ public class PlayerGravity : MonoBehaviour {
 
     void Awake() {
         control = GetComponent<PlayerController>();
+        input = GetComponent<PlayerInput>();
         jump = GetComponent<PlayerJumping>();
         attack = GetComponent<PlayerAttacks>();
         special = GetComponent<PlayerSpecialAttack>();
@@ -67,14 +73,17 @@ public class PlayerGravity : MonoBehaviour {
         
         // Apex:
         _apexPoint = Mathf.InverseLerp(_jumpApexThreshold, 0, Mathf.Abs(rb.velocity.y));
-        if (!control.PlayerGrounded && _apexPoint != 0 && jumpPressed)
+        if (!control.PlayerGrounded && 
+            _apexPoint != 0 && 
+            (jumpPressed || (attack.currentAttack == attack.rollAttack && input.actions["Attack"].IsPressed()))
+            )
         {
             if (jump.currentJump != JumpType.WALL)
             {
                 var apexBonus = control.GetInput() * _apexBonus * _apexPoint;
                 rb.velocity += apexBonus * Time.deltaTime;
             }
-            _fallSpeed = Mathf.Lerp(_minFallSpeed, lowJumpGravMult, _apexPoint);
+            _fallSpeed = Mathf.Lerp(_minFallSpeed, fallGravMult, _apexPoint);
             rb.velocity += Vector3.up * Physics.gravity.y * _fallSpeed * Time.deltaTime;
             return;
         }
@@ -82,11 +91,13 @@ public class PlayerGravity : MonoBehaviour {
         SimpleGravity();
 
         // After jump extra gravity
-        if (rb.velocity.y > 0 && !control.PlayerGrounded && afterJumpExtraGrav > 0) {
+        if (rb.velocity.y > 0 && !control.PlayerGrounded && afterJumpExtraGrav > 0)
+        {
             rb.velocity += Vector3.up * Physics.gravity.y * afterJumpExtraGrav * Time.deltaTime;
         }
         // apply extra gravity if falling, or...
-        if (rb.velocity.y < 0 && !control.PlayerGrounded) {
+        if (rb.velocity.y < 0 && !control.PlayerGrounded)
+        {
             rb.velocity += Vector3.up * Physics.gravity.y * fallGravMult * Time.deltaTime;
         }
         else if (rb.velocity.y > 0) {
@@ -97,13 +108,25 @@ public class PlayerGravity : MonoBehaviour {
             //  ...on walls
             else if (jumpPressed && control.PlayerOnSteep) {
                 var dot = Mathf.Abs(Vector3.Dot(Vector3.up, control.steepNormal));
-                rb.velocity += Vector3.up * Physics.gravity.y * (lowJumpGravMult * dot) * Time.deltaTime;
+                rb.velocity += Vector3.up * Physics.gravity.y * (wallGravMult * dot) * Time.deltaTime;
             }
         }
-        // 
+
+        // Wall hang (janky town)
+        if (control.PlayerOnSteep && rb.velocity.y < 0 && control.state == PlayerStates.NORMAL)
+        {
+            rb.velocity = rb.velocity - (rb.velocity * Time.deltaTime * changeRatef);
+        }
+        else if (control.PlayerOnSteep && rb.velocity.y < 0 && control.state == PlayerStates.ROLL)
+        {
+            print("wall go down, something fucky somewhere here...");
+            rb.velocity = new (rb.velocity.x, rb.velocity.y - (rb.velocity.y * Time.deltaTime * wallHangingRollMode), rb.velocity.z);
+        }
         CapFallSpeed();
     }
 
+    public float wallHangingRollMode = 1;
+    public float changeRatef = 5;
     void CapFallSpeed()
     {
         if (rb.velocity.y < -_maxFallSpeed && control.state != PlayerStates.BASEBALL && control.state != PlayerStates.SAMURAI)

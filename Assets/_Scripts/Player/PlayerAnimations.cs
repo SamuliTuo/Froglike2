@@ -63,21 +63,23 @@ public class PlayerAnimations : MonoBehaviour {
     }
 
     float wallPerc = 0;
+    public float wallAnimationTransitionSpeed_In = 1;
+    public float wallAnimationTransitionSpeed_Out = 1;
+    public float wallAnimMaxPerc = 1;
     public void SlidingOnWallsAnimations()
     {
-        if (control.PlayerOnSteep && !control.PlayerGrounded)
+        if (control.PlayerOnSteep && !control.PlayerGrounded && control.state == PlayerStates.NORMAL)
         {
-            wallPerc = Mathf.Min(wallPerc += Time.deltaTime * 3, 0.8f);
+            wallPerc = Mathf.Min(wallPerc += Time.deltaTime * wallAnimationTransitionSpeed_In, wallAnimMaxPerc);
             float dirCheck = CheckIfLeftOrRight(transform.forward, control.steepNormal, transform.up);
             float dot = Vector3.Dot(control.steepNormal.normalized, transform.forward);
             float x = -dirCheck * (1 - Mathf.Abs(dot));
             float z = -dot;
             anim.SetFloat("wallX", x);
             anim.SetFloat("wallZ", z);
-            print("x: " + x + ", z: " + z);
         }
         else
-            wallPerc = Mathf.Max(wallPerc -= Time.deltaTime * 5, 0);
+            wallPerc = Mathf.Max(wallPerc -= Time.deltaTime * wallAnimationTransitionSpeed_Out, 0);
 
         anim.SetLayerWeight(2, wallPerc);
     }

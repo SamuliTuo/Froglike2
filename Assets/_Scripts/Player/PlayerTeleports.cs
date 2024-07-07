@@ -5,13 +5,13 @@ using Cinemachine;
 
 public class PlayerTeleports : MonoBehaviour {
 
+    public Transform spawnPoint = null;
     [SerializeField] private Transform cameraTargetPlr = null;
     [SerializeField] private CinemachineVirtualCamera cam = null;
 
     private PlayerController control;
     private Rigidbody rb;
     private Transform cameraTargetKillcam;
-    
 
     private void Awake() {
         control = GetComponent<PlayerController>();
@@ -25,7 +25,7 @@ public class PlayerTeleports : MonoBehaviour {
     }
 
     public void TeleportToLastRespawn() {
-        Singleton.instance.CameraChanger.ToggleLongJumpCamera(false);
+        Singleton.instance.CameraChanger.ToggleCamera(cameras.NORMAL);
         control.state = PlayerStates.NOT_IN_CONTROL;
         rb.velocity = Vector3.zero;
         cameraTargetKillcam.position = cameraTargetPlr.position;
@@ -38,7 +38,14 @@ public class PlayerTeleports : MonoBehaviour {
         //make a checkpoint-handler or something that can do this nicer
         yield return Helpers.GetWait(time);
         cam.Follow = cameraTargetPlr;
-        transform.position = new Vector3(0, 1.5f, 0);
+        if (spawnPoint != null)
+        {
+            transform.position = spawnPoint.position;
+        }
+        else
+        {
+            transform.position = new Vector3(0, 1.5f, 0);
+        }
         control.ResetPlayer();
         control.state = PlayerStates.NORMAL;
     }

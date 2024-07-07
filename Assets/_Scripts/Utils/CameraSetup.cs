@@ -8,10 +8,11 @@ public class CameraSetup : MonoBehaviour
 
     [SerializeField] private CinemachineVirtualCamera vcam_normal;
     [SerializeField] private CinemachineVirtualCamera vcam_longJump;
+    [SerializeField] private CinemachineVirtualCamera vcam_roll;
 
 
     private void Start()
     {
-        Singleton.instance.CameraChanger.SetReferences(vcam_normal, vcam_longJump);
+        Singleton.instance.CameraChanger.SetReferences(vcam_normal, vcam_longJump, vcam_roll);
     }
 }

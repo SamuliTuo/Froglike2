@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -9,9 +11,9 @@ public class PlayerAttacks : MonoBehaviour {
     [HideInInspector] public Transform target = null;
 
     [SerializeField] private PlayerAbilityUpgradeHolder attackEffects = null;
-    [SerializeField] private PlayerAttackScriptable groundAttack = null;
-    [SerializeField] private PlayerAttackScriptable airAttack = null;
-    [SerializeField] private PlayerAttackScriptable rollAttack = null;
+    public PlayerAttackScriptable groundAttack;
+    public PlayerAttackScriptable airAttack;
+    public PlayerAttackScriptable rollAttack;
     [SerializeField] private float airAttackStepForceVertical = 1;
     [SerializeField] private float airAttackStopForceHorizontal = 1;
     [SerializeField] private float targetPosOffsetFromPlayer = 1.6f;
@@ -29,8 +31,8 @@ public class PlayerAttacks : MonoBehaviour {
     private PlayerRolling roll;
     private PlayerColliderChanges colliders;
     private AttackInstance currentAttackInstance;
-    private PlayerAttackScriptable currentAttack = null;
-    private PlayerAttackScriptable nextAttack = null;
+    public PlayerAttackScriptable currentAttack = null;
+    public PlayerAttackScriptable nextAttack = null;
     private SwordTrigger weaponTrigger;
     private AttackHitEffects attackHitEffects;
     private Animator anim;
@@ -69,10 +71,21 @@ public class PlayerAttacks : MonoBehaviour {
             InitAttack();
         }
         else if (control.state == PlayerStates.ROLL) {
-            if (colliders.TryToStandUp()) {
-                roll.StopRoll();
-                colliders.ChangeToStandUpColliders();
-                InitAttack(rollAttack);
+            if (colliders.TryToStandUp())
+            {
+                StartCoroutine(jump.JustJumped());
+                if (roll.continuousRoll)
+                {
+                    roll.StopRoll();
+                    colliders.ChangeToStandUpColliders();
+                    InitAttack(rollAttack);
+                }
+                else
+                {
+                    roll.StopRoll(true);
+                    colliders.ChangeToStandUpColliders();
+                    InitAttack();
+                }
             }
         }
     }
@@ -87,7 +100,9 @@ public class PlayerAttacks : MonoBehaviour {
         }
     }
     private Enemy_TongueInteraction targetScript = null;
+    private float inputMagWhileStartingAttack = 0;
     void InitAttack(PlayerAttackScriptable attack) {
+        inputMagWhileStartingAttack = control.GetInput().magnitude;
         control.state = PlayerStates.ATTACK;
         currentAttack = attack;
         control.StopAfterSpecialGravity();
@@ -118,7 +133,16 @@ public class PlayerAttacks : MonoBehaviour {
         }
         var lookRot = AimAndChooseTarget(aimerRadius, aimerDistance);
         model.rotation = Quaternion.LookRotation(new(lookRot.x, 0, lookRot.z));
-        if (target != null) {
+
+        if (attack == rollAttack)
+        {
+            print("is this roll attack!" + control.GetInput().magnitude);
+            Vector3 rollNewVelo = model.forward * currentAttack.stepForce * control.GetInput().magnitude * 0 + transform.up * currentAttack.stepForceUp;
+            roll.rollDir = rollNewVelo * 5;
+            control.SetNextVelo(rollNewVelo);
+        }
+
+        else if (target != null) {
             switch (targetScript.enemySize)
             {
                 case EnemySizes.SMALL:
@@ -138,6 +162,7 @@ public class PlayerAttacks : MonoBehaviour {
         {    
             control.SetVelocity(model.forward * currentAttack.stepForce);
         }
+
         startedMoveReturn = false;
         anim.Play(attack.animatorStateName, 0, attack.animationStartPerc);
         currentAttackInstance = Singleton.instance.PlayerAttackSpawner.SpawnAttack(currentAttack, model);
@@ -169,10 +194,13 @@ public class PlayerAttacks : MonoBehaviour {
         Vector3 xAxis, float currX,
         Vector3 zAxis, float currZ) 
     {
-        if (takeAirStep)
+        if (takeAirStep && currentAttack != rollAttack)
         {
+            print("time for AIRSTEP!");
             takeAirStep = false;
-            Vector3 veloAdd = Vector3.down * rb.velocity.y + Vector3.down * airAttackStepForceVertical + model.forward * airAttackStopForceHorizontal;
+            control.SetVelocity(Vector3.zero);
+            control.airStop = true;
+            Vector3 veloAdd = Vector3.down * airAttackStepForceVertical + model.forward * airAttackStopForceHorizontal;//Vector3.down * rb.velocity.y + Vector3.down * airAttackStepForceVertical + model.forward * airAttackStopForceHorizontal;
             gravity.StopJumpCoroutines();
             return veloAdd;
         }
@@ -181,12 +209,22 @@ public class PlayerAttacks : MonoBehaviour {
         if (t < currentAttack.stepDuration * attSpdModifier) {
             perc = 1 - t / (currentAttack.stepDuration * attSpdModifier);
         }
-        float desiredX = (model.forward * currentAttack.stepForce).x * perc * (2 - attSpdModifier);
-        float desiredZ = (model.forward * currentAttack.stepForce).z * perc * (2 - attSpdModifier);
+        float desiredX =
+            (model.forward * Mathf.Lerp(currentAttack.stepEndForce, currentAttack.stepForce, perc)).x *
+            (2 - attSpdModifier) *
+            inputMagWhileStartingAttack;
+        float desiredZ =
+            (model.forward * Mathf.Lerp(currentAttack.stepEndForce, currentAttack.stepForce, perc)).z *
+            (2 - attSpdModifier) *
+            inputMagWhileStartingAttack;
+
         Vector2 currentVelo = new Vector2(currX, currZ);
         Vector2 desiredVelo = new Vector2(desiredX, desiredZ);
         Vector2 newVelo;
-        if (control.PlayerGrounded)
+
+        if (currentAttack == rollAttack)
+            newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, 0.9f);
+        else if (control.PlayerGrounded)
             newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, 100);
         else
             newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, 0.1f);
@@ -212,26 +250,38 @@ public class PlayerAttacks : MonoBehaviour {
                 weaponTrigger.ColliderOff();
             }
 
+            // Roll attack
+            if (attack == rollAttack)
+            {
+                //control.SetNextVelo(model.forward * currentAttack.stepForce + transform.up * currentAttack.stepForceUp);
+                yield return null;
+            }
+
             // Movement:
-            if (t < attack.moveReturnPerc * attackDuration * attSpdModifier) {
+            else if (t < attack.moveReturnPerc * attackDuration * attSpdModifier)
+            {
                 control.SetAccelerationMod(0);
             }
-            else if (!startedMoveReturn) {
+            else if (!startedMoveReturn)
+            {
                 control.InitAccelerationModReturn(attack.moveReturnDuration, false);
                 hijackControls = false;
                 startedMoveReturn = true;
             }
 
             // Rotation:
-            if (t < attack.rotReturnDuration * attackDuration * attSpdModifier) {
+            if (t < attack.rotReturnDuration * attackDuration * attSpdModifier)
+            {
                 rotate.SetRotateSpdMod(0);
             }
-            else if (!startedRotReturn) {
+            else if (!startedRotReturn)
+            {
                 rotate.InitRotateSpdModReturn(attack.rotReturnDuration);
             }
 
             // If action queued, start it:
-            if (t > attack.nextAttackInitPerc * attackDuration * attSpdModifier) {
+            if (t > attack.nextAttackInitPerc * attackDuration * attSpdModifier)
+            {
                 if (control.IsQueuedAction(QueuedAction.ATTACK))
                 {
                     nextAttack = currentAttack.nextAttack;
@@ -244,8 +294,14 @@ public class PlayerAttacks : MonoBehaviour {
                         yield break;
                     }
                 }
+                else if (attack == rollAttack && !control.IsQueuedAction(QueuedAction.SPECIAL)) // && control.GetInput().magnitude > control.deadzone)
+                {
+                    roll.ContinueCRoll();
+                    yield break;
+                }
                 else if (control.IsQueuedAction(QueuedAction.NULL) == false)
                 {
+                    roll.StopRoll(true);
                     anim.speed = 1;
                     weaponTrigger.ColliderOff();
                     hijackControls = takeAirStep = false;

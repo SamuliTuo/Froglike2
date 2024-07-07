@@ -30,10 +30,11 @@ public class PlayerController : MonoBehaviour {
     
     [HideInInspector] public float deadzoneSquared;
     [HideInInspector] public int stepsSinceLastGrounded;
+    [HideInInspector] public int stepsSinceLastSteep = 10000;
     [HideInInspector] public PlayerStates state = PlayerStates.NORMAL;
     [HideInInspector] public float moveSpeedMod = 1;
     [HideInInspector] public float xAxis, yAxis;
-    [HideInInspector] public Vector3 contactPoint, contactNormal, steepNormal;
+    [HideInInspector] public Vector3 contactPoint, contactNormal, steepNormal, lastSteepNormal;
     [HideInInspector] public string contactTag;
     [HideInInspector] public bool playerOnSlippery;
     public bool PlayerGrounded => groundContactCount > 0;
@@ -129,6 +130,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     void Update() {
+        //print(lastSteepNormal);
         if (state == PlayerStates.NOT_IN_CONTROL || state == PlayerStates.GRAPPLE) {
             return;
         }
@@ -195,6 +197,7 @@ public class PlayerController : MonoBehaviour {
 
     void UpdateState() {
         stepsSinceLastGrounded++;
+        stepsSinceLastSteep++;
         velocity = rb.velocity;
         if (PlayerGrounded || SnapToGround()) {
             stepsSinceLastGrounded = 0;
@@ -214,10 +217,30 @@ public class PlayerController : MonoBehaviour {
         }
     }
 
+    public bool airStop = false;
     void AdjustVelocity() {
         Vector3 xAx = ProjectOnContactPlane(Vector3.right).normalized;
         Vector3 zAx = ProjectOnContactPlane(Vector3.forward).normalized;
         relativeVelo = velocity - connectionVelocity;
+
+        velocity = LimitVelocity();
+
+        if (airStop)
+        {
+            print("airstop!");
+            velocity = Vector3.zero;
+            airStop = false;
+        }
+        if (useNextVelo)
+        {
+            if (velocity.y < 0)
+            {
+                print("stopped velo y");
+                velocity.y = 0;
+            }
+            velocity += nextVelo;
+            useNextVelo = false;
+        }
 
         if (state == PlayerStates.LONG_JUMP) { //!jump.playerCanJump || 
             return;
@@ -231,19 +254,32 @@ public class PlayerController : MonoBehaviour {
             return;
         }
 
+        // Here we roll:
         //anim.relativeVelo = relativeVelo;
         float currentX = Vector3.Dot(relativeVelo, xAx);
         float currentZ = Vector3.Dot(relativeVelo, zAx);
-        if (state == PlayerStates.ROLL) {
+        if (state == PlayerStates.ROLL)
+        {
+            currentX = relativeVelo.x;
+            currentZ = relativeVelo.z;
             velocity += roll.RollingSpeedVector3(xAx, currentX, zAx, currentZ);
             return;
         }
         else if (state == PlayerStates.ATTACK) {
-            velocity += attack.AttackWithoutTargetVector3(xAx, currentX, zAx, currentZ);
+            var dir = attack.AttackWithoutTargetVector3(xAx, currentX, zAx, currentZ);
+            if (airStop)
+            {
+                velocity = dir;
+                airStop = false;
+            }
+            else
+            {
+                velocity += dir;
+            }
             return;
         }
         else if (state == PlayerStates.BASEBALL || state == PlayerStates.SAMURAI) {
-            velocity = special.BaseballSamuraiMovement(xAx, currentX, zAx, currentZ);
+            velocity = special.BaseballSamuraiMovement();// xAx, currentX, zAx, currentZ);
             return;
         }
 
@@ -266,6 +302,30 @@ public class PlayerController : MonoBehaviour {
         desiredVelo *= run.RunningMultiplier();
         Vector2 newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, maxSpeedChange);
         velocity += xAx * (newVelo.x - currentX) + zAx * (newVelo.y - currentZ);
+    }
+
+    public float maxVelocitySoftCap = 2000;
+    public float maxVelocityHarderCap = 8000;
+    public float veloBrakeSpd = 0.99f;
+    public float veloBrakeSpd_afterHardCap = 0.5f;
+    public float veloBrakeSpd_afterSoftCap = 0.9f;
+    Vector3 LimitVelocity()
+    {
+        float veloSqr = velocity.sqrMagnitude; 
+        float moveMax = roll.cRollMoveSpeed * roll.cRollMoveSpeed; // 33 * 33 = 1089
+        if (veloSqr > moveMax)
+        {
+            if (veloSqr > maxVelocitySoftCap)
+            {
+                if (veloSqr > maxVelocityHarderCap)
+                {
+                    return velocity * veloBrakeSpd_afterHardCap;
+                }
+                return velocity * veloBrakeSpd_afterSoftCap;
+            }
+            return velocity * veloBrakeSpd;
+        }
+        return velocity;
     }
 
     void ClearState() {
@@ -302,9 +362,11 @@ public class PlayerController : MonoBehaviour {
             }
         }
         float minDot = GetMinDot(col.gameObject.layer);
-        for (int i = 0; i < col.contactCount; i++) {
+        for (int i = 0; i < col.contactCount; i++) 
+        {
             Vector3 normal = col.GetContact(i).normal;
-            if (normal.y >= minDot) {
+            if (normal.y >= minDot) 
+            {
                 groundContactCount += 1;
                 contactNormal += normal;
                 connectedRb = col.rigidbody;
@@ -312,14 +374,28 @@ public class PlayerController : MonoBehaviour {
                 jump.airJumpUsed = false;
                 jump.lateJumpTimer = jump.maxLateJumpTimeSteps;
             }
-            else if (normal.y > -0.5f) {
+            else if (normal.y > -0.5f) 
+            {
                 steepContactCount += 1;
                 steepNormal += normal;
+                if (jump.playerCanJump) 
+                {
+                    stepsSinceLastSteep = 0;
+                }
                 contactTag = col.GetContact(i).otherCollider.tag;
-                if (groundContactCount == 0) {
+                if (groundContactCount == 0) 
+                {
                     connectedRb = col.rigidbody;
                 }
+                if (steepNormal != Vector3.zero)
+                {
+                    lastSteepNormal = steepNormal;
+                } 
             }
+        }
+        if (!PlayerGrounded && PlayerOnSteep)
+        {
+            Singleton.instance.ParticleEffects.SpawnContinuousSmoke(contactPoint, lastSteepNormal);
         }
     }
 
@@ -428,6 +504,13 @@ public class PlayerController : MonoBehaviour {
     public void SetVelocity(Vector3 velo){
         velocity = velo;
     }
+    public Vector3 nextVelo;
+    bool useNextVelo = false;
+    public void SetNextVelo(Vector3 velo)
+    {
+        useNextVelo = true;
+        nextVelo = velo;
+    }
     public Vector3 GetVelocity() {
         return velocity;
     }
@@ -450,7 +533,7 @@ public class PlayerController : MonoBehaviour {
         grapple.InterruptGrapple();
         tongue.InterruptTonguePull();
         weaponBuff.InterruptWeaponBuff();
-        Singleton.instance.CameraChanger.ToggleLongJumpCamera(false);
+        Singleton.instance.CameraChanger.ToggleCamera(cameras.NORMAL);
         if (colChanger.currentCol == colTypes.SMALL && !colChanger.TryToStandUp()) {
             crawl.InitCrawlOnStuckUnder();
             return;

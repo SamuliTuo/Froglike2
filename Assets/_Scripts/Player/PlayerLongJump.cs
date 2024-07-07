@@ -80,7 +80,7 @@ public class PlayerLongJump : MonoBehaviour {
         stepsSinceOnWall = lateWallJumpMaxTime;
         control.state = PlayerStates.LONG_JUMP;
         t = 0;
-        Singleton.instance.CameraChanger.ToggleLongJumpCamera(true);
+        Singleton.instance.CameraChanger.ToggleCamera(cameras.LONGJUMP);
     }
 
     // Updating longjump
@@ -132,7 +132,7 @@ public class PlayerLongJump : MonoBehaviour {
         LJSteering();
         if (control.PlayerGrounded && jump.playerCanJump) 
         {
-            Singleton.instance.CameraChanger.ToggleLongJumpCamera(false);
+            Singleton.instance.CameraChanger.ToggleCamera(cameras.NORMAL);
             roll.InitLandingRoll();
         }
         KeepTrackOfWalls();
@@ -206,7 +206,7 @@ public class PlayerLongJump : MonoBehaviour {
         applyLongJumpStopperForce = true;
         yield return Helpers.GetWait(0.4f);
 
-        Singleton.instance.CameraChanger.ToggleLongJumpCamera(false);
+        Singleton.instance.CameraChanger.ToggleCamera(cameras.NORMAL);
         control.state = PlayerStates.NORMAL;
         if (control.PlayerGrounded == false) {
             animations.FadeToAnimation("jump", 0.2f, 0, 0.75f);
@@ -289,7 +289,7 @@ public class PlayerLongJump : MonoBehaviour {
         anim.Play("longJumpStun", 0, 0);
         yield return Helpers.GetWait(0.05f);
 
-        Singleton.instance.CameraChanger.ToggleLongJumpCamera(false);
+        Singleton.instance.CameraChanger.ToggleCamera(cameras.NORMAL);
         control.SetVelocity(Vector3.zero);
         rb.velocity = Vector3.zero;
         rb.AddForce(stunDir, ForceMode.Impulse);
@@ -308,7 +308,7 @@ public class PlayerLongJump : MonoBehaviour {
     }
 
     void EndLongJumpStun() {
-        Singleton.instance.CameraChanger.ToggleLongJumpCamera(false);
+        Singleton.instance.CameraChanger.ToggleCamera(cameras.NORMAL);
         stunned = false;
         anim.CrossFade("idleWalkRun", 0.2f, 0);
         control.state = PlayerStates.NORMAL;
