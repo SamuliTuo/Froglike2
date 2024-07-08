@@ -102,7 +102,15 @@ public class PlayerGravity : MonoBehaviour {
         }
         else if (rb.velocity.y > 0) {
             //  ...when the jump button is released
-            if (!jumpPressed || control.state == PlayerStates.ATTACK) {
+            if (control.state == PlayerStates.ATTACK)
+            {
+                if (attack.currentAttack != attack.rollAttack && (!jumpPressed || !input.actions["Attack"].IsPressed()))
+                {
+                    rb.velocity += Vector3.up * Physics.gravity.y * lowJumpGravMult * Time.deltaTime;
+                }
+            }
+            else if (!jumpPressed)
+            {
                 rb.velocity += Vector3.up * Physics.gravity.y * lowJumpGravMult * Time.deltaTime;
             }
             //  ...on walls

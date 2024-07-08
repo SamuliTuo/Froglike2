@@ -236,7 +236,6 @@ public class PlayerRolling : MonoBehaviour {
             {
                 float _perc = Mathf.Clamp(sum / control.maxVelocityHarderCap - desiredVeloSqrMag, 0, 1);
                 float lerpAmount = Mathf.Lerp(dotProd, 0, _perc * _perc);
-                print("lerp t " + lerpAmount);
                 newVelo = Vector2.MoveTowards(
                     currentVelo, 
                     desiredVelo, 

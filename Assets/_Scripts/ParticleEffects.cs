@@ -47,7 +47,14 @@ public class ParticleEffects : MonoBehaviour
         if (canSpawnSmoke)
         {
             bitsSpawner.transform.position = pos;
-            bitsSpawner.transform.rotation = Quaternion.LookRotation(dir);
+            if (dir != Vector3.zero)
+            {
+                bitsSpawner.transform.rotation = Quaternion.LookRotation(dir);
+            }
+            else
+            {
+                bitsSpawner.transform.rotation = Quaternion.LookRotation(Vector3.up);
+            }
             bitsSpawner.Emit(Random.Range(continuousSmoke_spawnCountMinMax.x, continuousSmoke_spawnCountMinMax.y + 1));
 
             canSpawnSmoke = false;

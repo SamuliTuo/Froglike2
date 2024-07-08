@@ -136,7 +136,6 @@ public class PlayerAttacks : MonoBehaviour {
 
         if (attack == rollAttack)
         {
-            print("is this roll attack!" + control.GetInput().magnitude);
             Vector3 rollNewVelo = model.forward * currentAttack.stepForce * control.GetInput().magnitude * 0 + transform.up * currentAttack.stepForceUp;
             roll.rollDir = rollNewVelo * 5;
             control.SetNextVelo(rollNewVelo);
@@ -251,14 +250,14 @@ public class PlayerAttacks : MonoBehaviour {
             }
 
             // Roll attack
-            if (attack == rollAttack)
-            {
-                //control.SetNextVelo(model.forward * currentAttack.stepForce + transform.up * currentAttack.stepForceUp);
-                yield return null;
-            }
+            //if (attack == rollAttack)
+            //{
+            //    //control.SetNextVelo(model.forward * currentAttack.stepForce + transform.up * currentAttack.stepForceUp);
+            //    yield return null;
+            //}
 
             // Movement:
-            else if (t < attack.moveReturnPerc * attackDuration * attSpdModifier)
+            if (t < attack.moveReturnPerc * attackDuration * attSpdModifier)
             {
                 control.SetAccelerationMod(0);
             }
@@ -284,12 +283,18 @@ public class PlayerAttacks : MonoBehaviour {
             {
                 if (control.IsQueuedAction(QueuedAction.ATTACK))
                 {
-                    nextAttack = currentAttack.nextAttack;
+                    anim.speed = 1;
+                    nextAttack = attack.nextAttack;
+                    weaponTrigger.ColliderOff();
+                    if (attack == rollAttack)
+                    {
+                        takeAirStep = true;
+                        InitAttack(nextAttack);
+                        yield break;
+                    }
                     if (nextAttack != null)
                     {
-                        anim.speed = 1;
                         takeAirStep = false;
-                        weaponTrigger.ColliderOff();
                         InitAttack(nextAttack);
                         yield break;
                     }
