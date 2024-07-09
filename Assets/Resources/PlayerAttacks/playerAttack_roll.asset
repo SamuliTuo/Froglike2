@@ -22,15 +22,15 @@ MonoBehaviour:
   animatorStateName: attack_rose02
   manaRegenedPerHit: 0.01
   staminaRegenedPerHit: 0.33
-  attackDuration: 0.25
+  attackDuration: 0.35
   animationSpeed: 1.5
   animationStartPerc: 0
   nextAttack: {fileID: 11400000, guid: 580b7c7f611a8634694644138ca01d4f, type: 2}
   nextAttackInitPerc: 0.752
   stepForce: 80
   stepEndForce: 30
-  stepForceUp: 20
-  stepDuration: 0.05
+  stepForceUp: 7
+  stepDuration: 0.2
   attackHomingEndPerc: 0.3
   moveReturnPerc: 0.646
   moveReturnDuration: 0.25

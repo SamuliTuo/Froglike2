@@ -263,6 +263,7 @@ public class PlayerController : MonoBehaviour {
             currentX = relativeVelo.x;
             currentZ = relativeVelo.z;
             velocity += roll.RollingSpeedVector3(xAx, currentX, zAx, currentZ);
+            //print("velo: " + velocity.magnitude);
             return;
         }
         else if (state == PlayerStates.ATTACK) {
@@ -302,6 +303,7 @@ public class PlayerController : MonoBehaviour {
         desiredVelo *= run.RunningMultiplier();
         Vector2 newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, maxSpeedChange);
         velocity += xAx * (newVelo.x - currentX) + zAx * (newVelo.y - currentZ);
+        print("velo: " + velocity.magnitude);
     }
 
     public float maxVelocitySoftCap = 2000;
