@@ -152,6 +152,7 @@ public class PlayerRolling : MonoBehaviour {
         Vector3 xAxis, float currX,
         Vector3 zAxis, float currZ)
     {
+        bool runPressed = input.actions["Run"].IsPressed();
         if (t < 1) {
             t += currentLerpSpeed * Time.deltaTime;
             float perc = Mathf.Sin(t * Mathf.PI * 0.5f);
@@ -174,10 +175,10 @@ public class PlayerRolling : MonoBehaviour {
                 }
 
                 rollingSpeed = cRollMoveSpeed;
-                if (control.getGrounded() && input.actions["Run"].IsPressed())
+                if (control.getGrounded() && runPressed)
                 {
                     rollingSpeed *= runRollingSpeedMultiplier;
-                    anim.SetFloat("RollVelo", 76);
+                    anim.SetFloat("RollVelo", Mathf.Clamp(rb.velocity.magnitude * 2, 30, 90));
                     Singleton.instance.ParticleEffects.SpawnContinuousSmoke(transform.position - Vector3.up - graphics.forward * 0.5f, -graphics.forward + Vector3.up);
                 }
                 else
@@ -232,7 +233,6 @@ public class PlayerRolling : MonoBehaviour {
         // Speed handling
         float desiredX = (rollDir * rollingSpeed).x;
         float desiredZ = (rollDir * rollingSpeed).z;
-        print("desired x :" + desiredX + ", z :" + desiredZ);
         Vector2 currentVelo = new Vector2(currX, currZ);
         Vector2 desiredVelo = new Vector2(desiredX, desiredZ);
         float currentVeloSqrMag = currentVelo.sqrMagnitude;
@@ -247,14 +247,25 @@ public class PlayerRolling : MonoBehaviour {
             {
                 float _perc = Mathf.Clamp(sum / control.maxVelocityHarderCap - desiredVeloSqrMag, 0, 1);
                 float lerpAmount = Mathf.Lerp(dotProd, 0, _perc * _perc);
-                newVelo = Vector2.MoveTowards(
-                    currentVelo, 
-                    desiredVelo, 
-                    Mathf.Lerp(rollSteeringRate_normal, rollSteeringRate_decelerateToMaxSpeed, lerpAmount));
+                if (runPressed)
+                {
+                    newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, Mathf.Lerp(rollSteeringRate_normal * 2, rollSteeringRate_decelerateToMaxSpeed, lerpAmount));
+                }
+                else
+                {
+                    newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, Mathf.Lerp(rollSteeringRate_normal, rollSteeringRate_decelerateToMaxSpeed, lerpAmount));
+                }
             }
             else
             {
-                newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_normal);
+                if (runPressed)
+                {
+                    newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_normal * 2);
+                }
+                else
+                {
+                    newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_normal);
+                }
             }
         }
         else if (control.GetInput().magnitude < control.deadzone)
@@ -263,6 +274,10 @@ public class PlayerRolling : MonoBehaviour {
         }
         else
         {
+            if (runPressed)
+            {
+                newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_opposite * 2);
+            }
             newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_opposite);
         }
         //print("current velo: " + currentVelo.magnitude + ", desired velo: " + desiredVelo.magnitude + ", new velo: " + newVelo.magnitude);

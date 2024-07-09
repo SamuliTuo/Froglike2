@@ -71,8 +71,8 @@ public class PlayerGravity : MonoBehaviour {
             return;
         }
 
-        print("=============================================");
-        print("    We doing gravity over here:");
+        //print("=============================================");
+        //print("    We doing gravity over here:");
 
         // Apex:
         _apexPoint = Mathf.InverseLerp(_jumpApexThreshold, 0, Mathf.Abs(rb.velocity.y));
@@ -83,11 +83,11 @@ public class PlayerGravity : MonoBehaviour {
         {
             if (jump.currentJump != JumpType.WALL)
             {
-                print("öh?");
+                //print("öh?");
                 var apexBonus = control.GetInput() * _apexBonus * _apexPoint;
                 rb.velocity += apexBonus * Time.deltaTime;
             }
-            print("-Add weird apex calculations");
+            //print("-Add weird apex calculations");
             _fallSpeed = Mathf.Lerp(_minFallSpeed, fallGravMult, _apexPoint);
             rb.velocity += Vector3.up * Physics.gravity.y * _fallSpeed * Time.deltaTime;
             return;
@@ -98,20 +98,20 @@ public class PlayerGravity : MonoBehaviour {
         // After jump extra gravity
         if (rb.velocity.y > 0 && !control.PlayerGrounded && afterJumpExtraGrav > 0)
         {
-            print("-Add extra graf after a JUMP");
+            //print("-Add extra graf after a JUMP");
             rb.velocity += Vector3.up * Physics.gravity.y * afterJumpExtraGrav * Time.deltaTime;
         }
         // apply extra gravity if falling, or...
         if (rb.velocity.y < 0 && !control.PlayerGrounded)
         {
-            print("-FALLING");
+            //print("-FALLING");
             rb.velocity += Vector3.up * Physics.gravity.y * fallGravMult * Time.deltaTime;
         }
         else if (rb.velocity.y > 0) {
             //  ...when the jump button is released
             if ((!jumpPressed && !input.actions["Attack"].IsPressed()) || (attack.currentAttack != attack.rollAttack && control.state == PlayerStates.ATTACK))
             {
-                print("JUMP ROLL GRAV!!!");
+                //print("JUMP ROLL GRAV!!!");
                 rb.velocity += Vector3.up * Physics.gravity.y * lowJumpGravMult * Time.deltaTime;
             }
             //else if (!jumpPressed)
@@ -154,11 +154,11 @@ public class PlayerGravity : MonoBehaviour {
         {
             rb.velocity += control.contactNormal *
                 (Vector3.Dot(Physics.gravity, control.contactNormal) * Time.deltaTime);
-            print("-Adding some contact normal gravity stuff (this could help with rolling ball physics)");
+            //print("-Adding some contact normal gravity stuff (this could help with rolling ball physics)");
         }
         else {
             rb.velocity += Physics.gravity * Time.deltaTime;
-            print("-Applying once the physics.gravity");
+            //print("-Applying once the physics.gravity");
         }
     }
     public IEnumerator JumpBrakes()
