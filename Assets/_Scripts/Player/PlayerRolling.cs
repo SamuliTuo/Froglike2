@@ -22,6 +22,7 @@ public class PlayerRolling : MonoBehaviour {
 
     [Space]
     public float cRollMoveSpeed = 33;
+    public float runRollingSpeedMultiplier = 10f;
     [SerializeField] private float lerpSpeed = 3.3f;
     [SerializeField] private float longJLandingLerpSpeed = 3.3f;
     [SerializeField] private float longLandingLerpStartPerc = 0.2f;
@@ -42,6 +43,7 @@ public class PlayerRolling : MonoBehaviour {
     private PlayerCrawl crawl;
     private PlayerRollingUpgrades rollUpgradeEffects;
     private PlayerColliderChanges colliders;
+    private PlayerInput input;
     private Transform graphics;
     private Rigidbody rb;
     private Animator anim;
@@ -61,6 +63,7 @@ public class PlayerRolling : MonoBehaviour {
         graphics = transform.GetChild(0);
         rb = GetComponent<Rigidbody>();
         anim = GetComponentInChildren<Animator>();
+        input = GetComponent<PlayerInput>();
     }
 
     // Called when Roll-input is pressed
@@ -169,8 +172,18 @@ public class PlayerRolling : MonoBehaviour {
                     animate.FadeToAnimation("roll_continuous", 0.15f, 0);
                     cRollSet = true;
                 }
-                anim.SetFloat("RollVelo", rb.velocity.magnitude);
+
                 rollingSpeed = cRollMoveSpeed;
+                if (control.getGrounded() && input.actions["Run"].IsPressed())
+                {
+                    rollingSpeed *= runRollingSpeedMultiplier;
+                    anim.SetFloat("RollVelo", 76);
+                    Singleton.instance.ParticleEffects.SpawnContinuousSmoke(transform.position - Vector3.up - graphics.forward * 0.5f, -graphics.forward + Vector3.up);
+                }
+                else
+                {
+                    anim.SetFloat("RollVelo", rb.velocity.magnitude);
+                }
             }
             else {
                 t += currentLerpSpeed * Time.deltaTime * 2;
@@ -191,13 +204,11 @@ public class PlayerRolling : MonoBehaviour {
         {
             float changeSpd = continuousRoll ? cRollDirChangeSped : rollDirChangeSpeed;
             float changeAmount = continuousRoll ? cRollDirChangeAmount : rollDirChangeAmount;
-            rollDir = Vector3.RotateTowards(
-            rollDir, control.GetInput(), changeAmount, changeSpd).normalized;
-
+            rollDir = Vector3.RotateTowards(rollDir, control.GetInput(), changeAmount, changeSpd).normalized;
             // smoke trail
             if (rb.velocity.sqrMagnitude > smokeTrailThreshholdSpeed)
             {
-                Singleton.instance.ParticleEffects.SpawnContinuousSmoke(transform.position + Vector3.down, -rollDir);
+                Singleton.instance.ParticleEffects.SpawnContinuousSmoke(transform.position + Vector3.down, -rollDir + Vector3.up * 0.5f);
                 smokeTrailT = 0;
             }
         }
@@ -206,7 +217,7 @@ public class PlayerRolling : MonoBehaviour {
             if (!control.PlayerOnSteep && smokeTrailT < smokeTrailTimeInAir)
             {
                 smokeTrailT += Time.deltaTime;
-                Singleton.instance.ParticleEffects.SpawnContinuousSmoke(transform.position + Vector3.down, -rollDir);
+                Singleton.instance.ParticleEffects.SpawnContinuousSmoke(transform.position + Vector3.down, -rollDir + Vector3.up * 0.5f);
             }
             //if (control.PlayerOnSteep && control.GetInput().magnitude < control.deadzone)
             //{
@@ -215,13 +226,13 @@ public class PlayerRolling : MonoBehaviour {
             //}
             float changeSpd = continuousRoll ? cRollDirChangeSped : rollDirChangeSpeed;
             float changeAmount = continuousRoll ? cRollDirChangeAmount_air : rollDirChangeAmount_air;
-            rollDir = Vector3.RotateTowards(
-            rollDir, control.GetInput(), changeAmount, changeSpd).normalized;
+            rollDir = Vector3.RotateTowards(rollDir, control.GetInput(), changeAmount, changeSpd).normalized;
         }
 
         // Speed handling
         float desiredX = (rollDir * rollingSpeed).x;
         float desiredZ = (rollDir * rollingSpeed).z;
+        print("desired x :" + desiredX + ", z :" + desiredZ);
         Vector2 currentVelo = new Vector2(currX, currZ);
         Vector2 desiredVelo = new Vector2(desiredX, desiredZ);
         float currentVeloSqrMag = currentVelo.sqrMagnitude;

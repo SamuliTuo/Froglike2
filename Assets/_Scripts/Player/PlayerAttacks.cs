@@ -136,9 +136,11 @@ public class PlayerAttacks : MonoBehaviour {
 
         if (attack == rollAttack)
         {
+            gravity.StopJumpCoroutines();
             Vector3 rollNewVelo = model.forward * currentAttack.stepForce * control.GetInput().magnitude * 0 + transform.up * currentAttack.stepForceUp;
             roll.rollDir = rollNewVelo * 5;
             control.SetNextVelo(rollNewVelo);
+            //gravity.JumpBrakes
         }
 
         else if (target != null) {
