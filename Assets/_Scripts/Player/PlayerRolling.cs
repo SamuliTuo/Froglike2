@@ -1,3 +1,4 @@
+using Cinemachine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.VersionControl;
@@ -20,6 +21,12 @@ public class PlayerRolling : MonoBehaviour {
     [SerializeField] private float rollDirChangeAmount_air = 0.01f;
     [SerializeField] private float cRollDirChangeAmount_air = 0.03f;
 
+    [Header("cRoll camera")]
+    [SerializeField] private float cameraFollowToggleSpeedOfCRollPerc = 0.5f;
+    [SerializeField] private float cRollCameraSlowMovingResetSpeed = 10;
+    [SerializeField] private float cRollCameraFastMovingResetSpeedMin = 0.6f;
+    [SerializeField] private float cRollCameraFastMovingResetSpeedMax = 0.1f;
+
     [Space]
     public float cRollMoveSpeed = 33;
     public float runRollingSpeedMultiplier = 10f;
@@ -32,7 +39,9 @@ public class PlayerRolling : MonoBehaviour {
     [SerializeField] private float maxSpeed = 33;
     [Header("Roll control")]
     [SerializeField] private float rollSteeringRate_normal = 1;
+    [SerializeField] private float rollSteeringRate_normal_running = 1;
     [SerializeField] private float rollSteeringRate_opposite = 3;
+    [SerializeField] private float rollSteeringRate_opposite_running = 3;
     [SerializeField] private float rollSteeringRate_decelerateToMaxSpeed = 0.1f;
     [SerializeField] private float rollSteeringRate_noInput = 0.1f;
     //[SerializeField] private float rollCloudTrailPlaybackSpeed = 2f;
@@ -47,6 +56,8 @@ public class PlayerRolling : MonoBehaviour {
     private Transform graphics;
     private Rigidbody rb;
     private Animator anim;
+    [SerializeField] private CinemachineVirtualCamera rollCinemachineVirtualCamera = null;
+    private CinemachinePOV rollCamera;
     private float currentLerpSpeed;
     private float startSpeed;
     private float stopSpd = 1;
@@ -54,6 +65,7 @@ public class PlayerRolling : MonoBehaviour {
     //private float xAxis, yAxis;
 
     void Start() {
+        rollCamera = rollCinemachineVirtualCamera.GetCinemachineComponent<CinemachinePOV>();
         control = GetComponent<PlayerController>();
         animate = GetComponentInChildren<PlayerAnimations>();
         rotate = GetComponentInChildren<PlayerRotate>();
@@ -100,6 +112,12 @@ public class PlayerRolling : MonoBehaviour {
 }
 
     public void InitRoll(bool cRoll = false) {
+        if (rollCamera == null)
+        {
+            rollCamera = rollCinemachineVirtualCamera.GetComponent<CinemachinePOV>();
+            print(rollCinemachineVirtualCamera);
+            print(rollCamera);
+        }
         cRollSet = false;
         canRoll = false;
         continuousRoll = cRoll;
@@ -239,8 +257,25 @@ public class PlayerRolling : MonoBehaviour {
         float desiredVeloSqrMag = desiredVelo.sqrMagnitude;
         Vector2 newVelo;
         float dotProd = Vector3.Dot(desiredVelo.normalized, currentVelo.normalized);
+        
+        if (currentVeloSqrMag < (cRollMoveSpeed * cRollMoveSpeed) * cameraFollowToggleSpeedOfCRollPerc)
+        {
+            rollCamera.m_HorizontalRecentering.m_RecenteringTime = rollCamera.m_VerticalRecentering.m_RecenteringTime = 10;
+        }
+        else
+        {
+            float perc = (currentVeloSqrMag - cRollMoveSpeed * cRollMoveSpeed) / (control.maxVelocitySoftCap - cRollMoveSpeed * cRollMoveSpeed);
+            print("lerping camera to follow with perc : "+perc);
+            rollCamera.m_HorizontalRecentering.m_RecenteringTime = Mathf.Lerp(cRollCameraFastMovingResetSpeedMin, cRollCameraFastMovingResetSpeedMax, perc);
+            rollCamera.m_VerticalRecentering.m_RecenteringTime = Mathf.Lerp(cRollCameraFastMovingResetSpeedMin, cRollCameraFastMovingResetSpeedMax, perc);
+
+        }
         if (dotProd > 0)
         {
+            // This right now controls SPEED AND STEERING!
+            // Thats stupid.
+            // Lets make some sense to it soon
+
             float sum = currentVeloSqrMag - desiredVeloSqrMag;
             //print("velos: "+sum);
             if (currentVeloSqrMag > desiredVeloSqrMag)
@@ -249,7 +284,7 @@ public class PlayerRolling : MonoBehaviour {
                 float lerpAmount = Mathf.Lerp(dotProd, 0, _perc * _perc);
                 if (runPressed)
                 {
-                    newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, Mathf.Lerp(rollSteeringRate_normal * 2, rollSteeringRate_decelerateToMaxSpeed, lerpAmount));
+                    newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, Mathf.Lerp(rollSteeringRate_normal_running, rollSteeringRate_decelerateToMaxSpeed, lerpAmount));
                 }
                 else
                 {
@@ -260,7 +295,7 @@ public class PlayerRolling : MonoBehaviour {
             {
                 if (runPressed)
                 {
-                    newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_normal * 2);
+                    newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_normal_running);
                 }
                 else
                 {
@@ -270,15 +305,25 @@ public class PlayerRolling : MonoBehaviour {
         }
         else if (control.GetInput().magnitude < control.deadzone)
         {
-            newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_noInput);
+            if (currentVeloSqrMag > (cRollMoveSpeed * cRollMoveSpeed) * 0.8f)
+            {
+                newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_noInput);
+            }
+            else
+            {
+                newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_normal);
+            }
         }
         else
         {
             if (runPressed)
             {
-                newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_opposite * 2);
+                newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_opposite_running);
             }
-            newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_opposite);
+            else
+            {
+                newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_opposite);
+            }
         }
         //print("current velo: " + currentVelo.magnitude + ", desired velo: " + desiredVelo.magnitude + ", new velo: " + newVelo.magnitude);
         return xAxis * (newVelo.x - currX) + zAxis * (newVelo.y - currZ);

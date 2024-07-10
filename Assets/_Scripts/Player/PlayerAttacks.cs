@@ -273,7 +273,7 @@ public class PlayerAttacks : MonoBehaviour {
             // Rotation:
             if (attack == rollAttack)
             {
-                model.transform.LookAt(model.transform.position + rb.velocity);
+                model.transform.LookAt(model.transform.position + new Vector3(rb.velocity.x, 0, rb.velocity.z));
             }
             else if (t < attack.rotReturnDuration * attackDuration * attSpdModifier)
             {
