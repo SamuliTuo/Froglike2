@@ -26,6 +26,7 @@ public class PlayerRolling : MonoBehaviour {
     [SerializeField] private float cRollCameraSlowMovingResetSpeed = 10;
     [SerializeField] private float cRollCameraFastMovingResetSpeedMin = 0.6f;
     [SerializeField] private float cRollCameraFastMovingResetSpeedMax = 0.1f;
+    [SerializeField] private float cRollSlowCameraResetTime = 20;
 
     [Space]
     public float cRollMoveSpeed = 33;
@@ -37,14 +38,20 @@ public class PlayerRolling : MonoBehaviour {
     [SerializeField] private float stopSpdWalk = 5;
     [SerializeField] private float stopSpdRun = 5;
     [SerializeField] private float maxSpeed = 33;
-    [Header("Roll control")]
-    [SerializeField] private float rollSteeringRate_normal = 1;
-    [SerializeField] private float rollSteeringRate_normal_running = 1;
-    [SerializeField] private float rollSteeringRate_opposite = 3;
-    [SerializeField] private float rollSteeringRate_opposite_running = 3;
-    [SerializeField] private float rollSteeringRate_decelerateToMaxSpeed = 0.1f;
-    [SerializeField] private float rollSteeringRate_noInput = 0.1f;
-    //[SerializeField] private float rollCloudTrailPlaybackSpeed = 2f;
+    [Header("cRoll speed changes")]
+    [SerializeField] private float rollAcceleratingRate_normal = 1;
+    [SerializeField] private float rollAcceleratingRate_normal_running = 1;
+    [SerializeField] private float rollAcceleratingRate_opposite = 3;
+    [SerializeField] private float rollAcceleratingRate_opposite_running = 3;
+    [SerializeField] private float rollAcceleratingRate_decelerateToMaxSpeed = 0.1f;
+    [SerializeField] private float rollAcceleratingRate_noInput = 0.1f;
+    [Header("cRoll turning")]
+    [SerializeField] private float rollTurnRate_normal = 1;
+    [SerializeField] private float rollTurnRate_normal_running = 1;
+    [SerializeField] private float rollTurnRate_opposite = 2;
+    [SerializeField] private float rollTurnRate_opposite_running = 3;
+    [Space(10)]
+    [SerializeField] private float rollCloudTrailPlaybackSpeed = 2f;
 
     private PlayerController control;
     private PlayerAnimations animate;
@@ -171,6 +178,7 @@ public class PlayerRolling : MonoBehaviour {
         Vector3 zAxis, float currZ)
     {
         bool runPressed = input.actions["Run"].IsPressed();
+        print("runpressd : " + runPressed);
         if (t < 1) {
             t += currentLerpSpeed * Time.deltaTime;
             float perc = Mathf.Sin(t * Mathf.PI * 0.5f);
@@ -192,10 +200,9 @@ public class PlayerRolling : MonoBehaviour {
                     cRollSet = true;
                 }
 
-                rollingSpeed = cRollMoveSpeed;
+                rollingSpeed = GetCorrectContinuousRollRollSpeed(runPressed);
                 if (control.getGrounded() && runPressed)
                 {
-                    rollingSpeed *= runRollingSpeedMultiplier;
                     anim.SetFloat("RollVelo", Mathf.Clamp(rb.velocity.magnitude * 2, 30, 90));
                     Singleton.instance.ParticleEffects.SpawnContinuousSmoke(transform.position - Vector3.up - graphics.forward * 0.5f, -graphics.forward + Vector3.up);
                 }
@@ -215,37 +222,36 @@ public class PlayerRolling : MonoBehaviour {
             rollingSpeed = stopSpd;
             EndRoll();
         }
-
         rollUpgradeEffects.RollEffectsSpawnAOEs();
 
-        // Steering:
+
+
+        // Steering...
+        float changeSpd = continuousRoll ? cRollDirChangeSped : rollDirChangeSpeed;
+        // ...on ground:
         if (control.PlayerGrounded)
         {
-            float changeSpd = continuousRoll ? cRollDirChangeSped : rollDirChangeSpeed;
-            float changeAmount = continuousRoll ? cRollDirChangeAmount : rollDirChangeAmount;
-            rollDir = Vector3.RotateTowards(rollDir, control.GetInput(), changeAmount, changeSpd).normalized;
             // smoke trail
             if (rb.velocity.sqrMagnitude > smokeTrailThreshholdSpeed)
             {
                 Singleton.instance.ParticleEffects.SpawnContinuousSmoke(transform.position + Vector3.down, -rollDir + Vector3.up * 0.5f);
                 smokeTrailT = 0;
             }
-        }
+
+            float changeAmount = continuousRoll ? cRollDirChangeAmount : rollDirChangeAmount;
+            rollDir = HandleSteering(changeSpd, changeAmount, runPressed);
+        }// ...in air:
         else
         {
+            // smoke trail
             if (!control.PlayerOnSteep && smokeTrailT < smokeTrailTimeInAir)
             {
                 smokeTrailT += Time.deltaTime;
                 Singleton.instance.ParticleEffects.SpawnContinuousSmoke(transform.position + Vector3.down, -rollDir + Vector3.up * 0.5f);
             }
-            //if (control.PlayerOnSteep && control.GetInput().magnitude < control.deadzone)
-            //{
-            //    EndRoll();
-            //    return Vector3.zero;
-            //}
-            float changeSpd = continuousRoll ? cRollDirChangeSped : rollDirChangeSpeed;
-            float changeAmount = continuousRoll ? cRollDirChangeAmount_air : rollDirChangeAmount_air;
-            rollDir = Vector3.RotateTowards(rollDir, control.GetInput(), changeAmount, changeSpd).normalized;
+
+            float steerChangeAmount = continuousRoll ? cRollDirChangeAmount_air : rollDirChangeAmount_air;
+            rollDir = HandleSteering(changeSpd, steerChangeAmount, runPressed);
         }
 
         // Speed handling
@@ -258,18 +264,21 @@ public class PlayerRolling : MonoBehaviour {
         Vector2 newVelo;
         float dotProd = Vector3.Dot(desiredVelo.normalized, currentVelo.normalized);
         
+        // Camera auto re-centering
         if (currentVeloSqrMag < (cRollMoveSpeed * cRollMoveSpeed) * cameraFollowToggleSpeedOfCRollPerc)
         {
-            rollCamera.m_HorizontalRecentering.m_RecenteringTime = rollCamera.m_VerticalRecentering.m_RecenteringTime = 10;
+            rollCamera.m_HorizontalRecentering.m_RecenteringTime = rollCamera.m_VerticalRecentering.m_RecenteringTime = cRollSlowCameraResetTime;
         }
         else
         {
             float perc = (currentVeloSqrMag - cRollMoveSpeed * cRollMoveSpeed) / (control.maxVelocitySoftCap - cRollMoveSpeed * cRollMoveSpeed);
-            print("lerping camera to follow with perc : "+perc);
+            //print("lerping camera to follow with perc : "+perc);
             rollCamera.m_HorizontalRecentering.m_RecenteringTime = Mathf.Lerp(cRollCameraFastMovingResetSpeedMin, cRollCameraFastMovingResetSpeedMax, perc);
             rollCamera.m_VerticalRecentering.m_RecenteringTime = Mathf.Lerp(cRollCameraFastMovingResetSpeedMin, cRollCameraFastMovingResetSpeedMax, perc);
 
         }
+
+        // Accelerations
         if (dotProd > 0)
         {
             // This right now controls SPEED AND STEERING!
@@ -278,28 +287,38 @@ public class PlayerRolling : MonoBehaviour {
 
             float sum = currentVeloSqrMag - desiredVeloSqrMag;
             //print("velos: "+sum);
+
+            /// mitä jos tääl ois toi dotProd, sit sillä kerrottais jotenkin niitä kaasu ja ohjaus muutoksia?
+            /// 
+            /// jotenki :
+            /// - (input ja velocity) dotti
+            /// - kerro sillä joku ja käännä newVeloa jotenkin Vector2.Turn(dotattu vectori, turnRate_spesifijoku);
+            /// - kerro sillä tai käänteisesti slilä tai jotenkin Vector2.newVelo * kerroin -> uus pituus.
+            /// - !!! Tsekkaa, että täällä on deltaTime paikallaan jossain!!!!
+
+
             if (currentVeloSqrMag > desiredVeloSqrMag)
             {
                 float _perc = Mathf.Clamp(sum / control.maxVelocityHarderCap - desiredVeloSqrMag, 0, 1);
                 float lerpAmount = Mathf.Lerp(dotProd, 0, _perc * _perc);
                 if (runPressed)
                 {
-                    newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, Mathf.Lerp(rollSteeringRate_normal_running, rollSteeringRate_decelerateToMaxSpeed, lerpAmount));
+                    newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, Mathf.Lerp(rollAcceleratingRate_normal_running, rollAcceleratingRate_decelerateToMaxSpeed, lerpAmount));
                 }
                 else
                 {
-                    newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, Mathf.Lerp(rollSteeringRate_normal, rollSteeringRate_decelerateToMaxSpeed, lerpAmount));
+                    newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, Mathf.Lerp(rollAcceleratingRate_normal, rollAcceleratingRate_decelerateToMaxSpeed, lerpAmount));
                 }
             }
             else
             {
                 if (runPressed)
                 {
-                    newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_normal_running);
+                    newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollAcceleratingRate_normal_running);
                 }
                 else
                 {
-                    newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_normal);
+                    newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollAcceleratingRate_normal);
                 }
             }
         }
@@ -307,27 +326,62 @@ public class PlayerRolling : MonoBehaviour {
         {
             if (currentVeloSqrMag > (cRollMoveSpeed * cRollMoveSpeed) * 0.8f)
             {
-                newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_noInput);
+                newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollAcceleratingRate_noInput);
             }
             else
             {
-                newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_normal);
+                newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollAcceleratingRate_normal);
             }
         }
         else
         {
             if (runPressed)
             {
-                newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_opposite_running);
+                newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollAcceleratingRate_opposite_running);
             }
             else
             {
-                newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollSteeringRate_opposite);
+                newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, rollAcceleratingRate_opposite);
             }
         }
         //print("current velo: " + currentVelo.magnitude + ", desired velo: " + desiredVelo.magnitude + ", new velo: " + newVelo.magnitude);
         return xAxis * (newVelo.x - currX) + zAxis * (newVelo.y - currZ);
     }
+
+
+
+    private float GetCorrectContinuousRollRollSpeed(bool runPressed)
+    {
+        float r = cRollMoveSpeed;
+        if (runPressed)
+        {
+            r = cRollMoveSpeed * runRollingSpeedMultiplier;
+        }
+        
+        return r;
+    }
+
+    private Vector3 HandleSteering(float changeSpd, float changeAmount, bool runPressed)
+    {
+        if (runPressed)
+        {
+            if (control.GetInput().sqrMagnitude > control.deadzoneSquared)
+            {
+                return Vector3.RotateTowards(rollDir, control.GetInput().normalized, changeAmount, changeSpd).normalized;
+            }
+            else
+            {
+                return Vector3.RotateTowards(rollDir, new Vector3(graphics.forward.x, 0, graphics.forward.z).normalized, changeAmount, changeSpd).normalized;
+            }
+        }
+        else
+        {
+            return Vector3.RotateTowards(rollDir, control.GetInput(), changeAmount, changeSpd).normalized;
+        }
+    }
+
+
+
 
     public void RollingHitEffects(Collision col) {
         rollUpgradeEffects.RollEffectsCollisions(col);
