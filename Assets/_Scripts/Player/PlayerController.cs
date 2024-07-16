@@ -255,17 +255,15 @@ public class PlayerController : MonoBehaviour {
         }
 
         // Here we roll:
-        //anim.relativeVelo = relativeVelo;
         float currentX = Vector3.Dot(relativeVelo, xAx);
         float currentZ = Vector3.Dot(relativeVelo, zAx);
+        //anim.relativeVelo = relativeVelo;
         if (state == PlayerStates.ROLL)
         {
-            currentX = relativeVelo.x;
-            currentZ = relativeVelo.z;
             velocity += roll.RollingSpeedVector3(xAx, currentX, zAx, currentZ);
-            //print("velo: " + velocity.magnitude);
             return;
         }
+        // or attack
         else if (state == PlayerStates.ATTACK) {
             var dir = attack.AttackWithoutTargetVector3(xAx, currentX, zAx, currentZ);
             if (airStop)
@@ -303,7 +301,7 @@ public class PlayerController : MonoBehaviour {
         desiredVelo *= run.RunningMultiplier();
         Vector2 newVelo = Vector2.MoveTowards(currentVelo, desiredVelo, maxSpeedChange);
         velocity += xAx * (newVelo.x - currentX) + zAx * (newVelo.y - currentZ);
-        print("velo: " + velocity.magnitude);
+        //print("velo: " + velocity.magnitude);
     }
 
     public float maxVelocitySoftCap = 2000;
@@ -364,7 +362,7 @@ public class PlayerController : MonoBehaviour {
             }
         }
         float minDot = GetMinDot(col.gameObject.layer);
-        for (int i = 0; i < col.contactCount; i++) 
+        for (int i = 0; i < col.contactCount; i++)
         {
             Vector3 normal = col.GetContact(i).normal;
             if (normal.y >= minDot) 

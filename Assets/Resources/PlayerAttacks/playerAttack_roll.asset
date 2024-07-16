@@ -29,7 +29,7 @@ MonoBehaviour:
   nextAttackInitPerc: 0.752
   stepForce: 80
   stepEndForce: 30
-  stepForceUp: 7
+  stepForceUp: 10
   stepDuration: 0.2
   attackHomingEndPerc: 0.3
   moveReturnPerc: 0.646
